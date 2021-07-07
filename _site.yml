@@ -1,5 +1,5 @@
 name: "Glia IHC"
-title: "IHC/ML to Phenotype AD Glia"
+title: "IHC and ML to Phenotype AD Glia"
 description: |
   APOE Glia
 theme: theme.css
@@ -16,5 +16,5 @@ navbar:
     - text: "Manual Annotation"
       menu:
         - text: "Reorder Channels"
-          href: reorder-channels
+          href: reorder-channels.html
 output: distill::distill_article

@@ -1,0 +1,28 @@
+{
+  "articles": [
+    {
+      "path": "404.html",
+      "title": "404 Error",
+      "author": [],
+      "contents": "\r\nYou may have reached this page in error. Please return to the home page, or open an issue on our GitHub repository.\r\n\r\n\r\n\r\n",
+      "last_modified": "2021-07-07T16:14:24-07:00"
+    },
+    {
+      "path": "index.html",
+      "title": "About",
+      "description": "We have developed a methodology of cyclic multiplex fluorescent immunohistochemistry on human postmortem brain sections followed by an image analysis and machine learning pipeline that enables a deep morphological characterization of astrocytes and microglia in the Alzheimer's brain.\n",
+      "author": [],
+      "contents": "\r\n\r\nContents\r\nSetup\r\nDocumentation\r\nCode Availability\r\n\r\nSetup\r\nInstall R to run our code.\r\nDocumentation\r\nTo read our documented code, please visit serrano-pozo-lab.github.io/glia-ihc or see below.\r\nCode Availability\r\nOur full codebase is available for download on GitHub.\r\n\r\n\r\n\r\n",
+      "last_modified": "2021-07-07T16:14:28-07:00"
+    },
+    {
+      "path": "reorder-channels.html",
+      "title": "Reorder Channels",
+      "description": "This ImageJ script allows the user to reorder imaging channels as necessary to facilitate downstream analysis.\n",
+      "author": [],
+      "contents": "\r\nPlease note that this script was created for the\r\nmacro \"Reorder Channels [r]\" {\r\n\r\n    // setBatchMode(true); // will bypass GUI!\r\n\r\n    dir = \"<insert your directory here>\";\r\n    output = dir + \"Converted TIFF Crops/Reordered Crops/\";\r\n\r\n    input = getDirectory(\"Choose input data folder.\");\r\n    files = getFileList(input);\r\n    Array.show(files);\r\n\r\n    \r\n    for (f = 0; f < files.length; f++) {\r\n\r\n        open(input + files[f]);\r\n        \r\n        ////////////////////////////////////////////////////////////\r\n        /////  LOAD IMAGE + DEFINE MARKERS\r\n        ////////////////////////////////////////////////////////////\r\n        \r\n        image = getTitle(); // get crop title\r\n        selectImage(image); // shift focus to the selected crop\r\n        filename = substring(image, 0, indexOf(image, \".tif\"));\r\n        \r\n        run(\"8-bit\"); // convert to 8-bit, note that will lose fluorescence granularity\r\n    \r\n        // create array to hold assigned slice names\r\n        titles = newArray(nSlices);\r\n        // list possible marker names\r\n        markerNames = newArray(\"GFAP\", \"DAPI\", \"MHC2\", \"TSPO\", \"EAAT2\", \"TMEM119\", \"CD68\", \"EAAT1\", \"ALDH1L1\", \"IBA1\", \"Vimentin\", \"Ferritin\", \"HuCD\", \"YKL40\", \"GS\", \"Abeta\", \"PHF1-tau\");\r\n        \r\n        for (i = 1; i <= nSlices; i++) {\r\n             \r\n            setSlice(i);\r\n            run(\"Enhance Contrast...\", \"saturated=0.3\"); // only for visualization purposes\r\n    \r\n            // call dialog box to assign marker name to selected slice\r\n            Dialog.create(\"Which Marker Is This?\");\r\n            Dialog.addChoice(\"Type:\", markerNames);\r\n            Dialog.show();\r\n            marker = Dialog.getChoice();\r\n    \r\n            // set slice name based on user choice\r\n            setMetadata(\"Label\", marker);\r\n            titles[i-1] = getInfo(\"slice.label\");\r\n            \r\n            markerNames = Array.deleteValue(markerNames, marker); // prevents the same marker from being assigned to multiple slices\r\n            \r\n        }   \r\n    \r\n        ////////////////////////////////////////////////////////////\r\n        /////  REORDER SLICES + DEFINE LUT\r\n        ////////////////////////////////////////////////////////////\r\n        \r\n        run(\"Stack to Images\"); // separate each slice\r\n    \r\n        // concatenate in right order - rearranges all slices\r\n        run(\"Concatenate...\", \" title=\" + image + \" open image1=DAPI image2=ALDH1L1 image3=IBA1 image4=GFAP image5=MHC2 image6=TSPO image7=EAAT2 image8=TMEM119 image9=CD68 image10=EAAT1 image11=Vimentin image12=Ferritin image13=YKL40 image14=GS image15=HuCD image16=Abeta image17=PHF1-tau\");\r\n    \r\n        // make composite image with color\r\n        run(\"Make Composite\", \"display=Color\");\r\n        \r\n        finalNames = newArray(\"DAPI\", \"ALDH1L1\", \"IBA1\", \"GFAP\", \"MHC2\", \"TSPO\", \"EAAT2\", \"TMEM119\", \"CD68\", \"EAAT1\", \"Vimentin\", \"Ferritin\", \"YKL40\", \"GS\", \"HuC/D\", \"Abeta\", \"PHF1-tau\");\r\n        colorList = newArray(\"Blue\", \"Red\", \"Green\", \"Magenta\", \"Cyan\", \"Yellow\", \"Grays\");\r\n                \r\n        for (k = 1; k <= nSlices; k++) {\r\n             \r\n            setSlice(k);\r\n            setMetadata(\"Label\", finalNames[k-1]); // set final name of slice\r\n    \r\n            run(colorList[(k-1) % colorList.length]); // apply distinct false color per slice\r\n            \r\n            // add more data pre-processing if desired!\r\n            \r\n        }\r\n        \r\n        saveAs(\"Tiff\", output + filename + \"_Reordered.tif\");\r\n        \r\n        close();\r\n\r\n    }\r\n    \r\n    \r\n}\r\n\r\n\r\n\r\n",
+      "last_modified": "2021-07-07T16:14:31-07:00"
+    }
+  ],
+  "collections": []
+}
