@@ -1,0 +1,101 @@
+---
+title: "Reorder Channels"
+description: |
+ This ImageJ script allows the user to reorder imaging channels as necessary to facilitate downstream analysis.
+output:
+  distill::distill_article:
+    toc: true
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(eval = FALSE)
+```
+
+Please note that this script was created for the
+
+``` {.ijm .IJM}
+macro "Reorder Channels [r]" {
+
+	// setBatchMode(true); // will bypass GUI!
+
+	dir = "<insert your directory here>";
+	output = dir + "Converted TIFF Crops/Reordered Crops/";
+
+	input = getDirectory("Choose input data folder.");
+	files = getFileList(input);
+	Array.show(files);
+
+	
+	for (f = 0; f < files.length; f++) {
+
+		open(input + files[f]);
+		
+		////////////////////////////////////////////////////////////
+		/////  LOAD IMAGE + DEFINE MARKERS
+		////////////////////////////////////////////////////////////
+		
+		image = getTitle(); // get crop title
+		selectImage(image); // shift focus to the selected crop
+		filename = substring(image, 0, indexOf(image, ".tif"));
+		
+		run("8-bit"); // convert to 8-bit, note that will lose fluorescence granularity
+	
+		// create array to hold assigned slice names
+		titles = newArray(nSlices);
+		// list possible marker names
+		markerNames = newArray("GFAP", "DAPI", "MHC2", "TSPO", "EAAT2", "TMEM119", "CD68", "EAAT1", "ALDH1L1", "IBA1", "Vimentin", "Ferritin", "HuCD", "YKL40", "GS", "Abeta", "PHF1-tau");
+		
+		for (i = 1; i <= nSlices; i++) {
+			 
+		    setSlice(i);
+		    run("Enhance Contrast...", "saturated=0.3"); // only for visualization purposes
+	
+		    // call dialog box to assign marker name to selected slice
+		    Dialog.create("Which Marker Is This?");
+		    Dialog.addChoice("Type:", markerNames);
+		    Dialog.show();
+		    marker = Dialog.getChoice();
+	
+		    // set slice name based on user choice
+		    setMetadata("Label", marker);
+		    titles[i-1] = getInfo("slice.label");
+		    
+		    markerNames = Array.deleteValue(markerNames, marker); // prevents the same marker from being assigned to multiple slices
+		    
+		}	
+	
+		////////////////////////////////////////////////////////////
+		/////  REORDER SLICES + DEFINE LUT
+		////////////////////////////////////////////////////////////
+		
+		run("Stack to Images"); // separate each slice
+	
+		// concatenate in right order - rearranges all slices
+		run("Concatenate...", " title=" + image + " open image1=DAPI image2=ALDH1L1 image3=IBA1 image4=GFAP image5=MHC2 image6=TSPO image7=EAAT2 image8=TMEM119 image9=CD68 image10=EAAT1 image11=Vimentin image12=Ferritin image13=YKL40 image14=GS image15=HuCD image16=Abeta image17=PHF1-tau");
+	
+		// make composite image with color
+		run("Make Composite", "display=Color");
+		
+		finalNames = newArray("DAPI", "ALDH1L1", "IBA1", "GFAP", "MHC2", "TSPO", "EAAT2", "TMEM119", "CD68", "EAAT1", "Vimentin", "Ferritin", "YKL40", "GS", "HuC/D", "Abeta", "PHF1-tau");
+		colorList = newArray("Blue", "Red", "Green", "Magenta", "Cyan", "Yellow", "Grays");
+				
+		for (k = 1; k <= nSlices; k++) {
+			 
+		    setSlice(k);
+		    setMetadata("Label", finalNames[k-1]); // set final name of slice
+	
+		    run(colorList[(k-1) % colorList.length]); // apply distinct false color per slice
+		    
+		    // add more data pre-processing if desired!
+		    
+		}
+		
+		saveAs("Tiff", output + filename + "_Reordered.tif");
+		
+		close();
+
+	}
+	
+	
+}
+```

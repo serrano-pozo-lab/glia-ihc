@@ -1,0 +1,30 @@
+---
+title: "About"
+description: |
+  We have developed a methodology of cyclic multiplex fluorescent immunohistochemistry on human postmortem brain sections followed by an image analysis and machine learning pipeline that enables a deep morphological characterization of astrocytes and microglia in the Alzheimer's brain.
+site: distill::distill_website
+output:
+  distill::distill_article:
+    toc: true
+---
+
+```{r include = FALSE, eval = FALSE}
+
+# to render website
+library(rmarkdown)
+library(distill)
+render_site()
+
+# to remove files
+clean_site()
+
+```
+
+# Setup
+Install [R](https://www.r-project.org/) to run our code.
+
+# Documentation
+To read our documented code, please visit [mindds.github.io/glia-ihc](https://mindds.github.io/glia-ihc) or see below.
+
+# Code Availability
+Our full codebase is available for download on [GitHub](https://github.com/mindds/glia-ihc).

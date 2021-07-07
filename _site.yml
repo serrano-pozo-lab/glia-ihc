@@ -1,0 +1,20 @@
+name: "Glia IHC"
+title: "IHC/ML to Phenotype AD Glia"
+description: |
+  APOE Glia
+theme: theme.css
+favicon: images/favicon.ico
+base_url: https://mindds.github.io/glia-ihc
+repository_url: https://github.com/ayushnoori/glia-ihc
+output_dir: "docs"
+navbar:
+  search: false
+  source_url: https://github.com/mindds/glia-ihc
+  right:
+    - text: "Home"
+      href: index.html
+    - text: "Manual Annotation"
+      menu:
+        - text: "Reorder Channels"
+          href: reorder-channels
+output: distill::distill_article
