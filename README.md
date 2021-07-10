@@ -20,7 +20,7 @@ Additional required libraries are specified in each script. Image segmentation w
 
 ## Documentation
 
-To read our documented code, please visit [serranopozolab.org/glia-ihc](https://serranopozolab.org/glia-ihc).
+To read our documented code, please visit [www.serranopozolab.org/glia-ihc](https://www.serranopozolab.org/glia-ihc).
 
 ## Code Availability
 
