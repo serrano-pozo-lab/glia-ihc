@@ -86,27 +86,30 @@ code span.wa { color: #5e5e5e; font-style: italic; } /* Warning */
 </style>
 
   <!--radix_placeholder_meta_tags-->
-  <title>IHC and ML to Phenotype AD Glia: 404 Error</title>
+  <title>IHC and ML to Phenotype AD Glia: Parse VIA ROIs</title>
 
+  <meta property="description" itemprop="description" content="This R script parses manual astrocyte, microglia, plaque, and tangle annotations created using the VGG Image Annotator tool into an ImageJ-readable format."/>
 
   <link rel="icon" type="image/vnd.microsoft.icon" href="images/favicon.ico"/>
 
 
   <!--  https://developers.facebook.com/docs/sharing/webmasters#markup -->
-  <meta property="og:title" content="IHC and ML to Phenotype AD Glia: 404 Error"/>
+  <meta property="og:title" content="IHC and ML to Phenotype AD Glia: Parse VIA ROIs"/>
   <meta property="og:type" content="article"/>
+  <meta property="og:description" content="This R script parses manual astrocyte, microglia, plaque, and tangle annotations created using the VGG Image Annotator tool into an ImageJ-readable format."/>
   <meta property="og:locale" content="en_US"/>
   <meta property="og:site_name" content="IHC and ML to Phenotype AD Glia"/>
 
   <!--  https://dev.twitter.com/cards/types/summary -->
   <meta property="twitter:card" content="summary"/>
-  <meta property="twitter:title" content="IHC and ML to Phenotype AD Glia: 404 Error"/>
+  <meta property="twitter:title" content="IHC and ML to Phenotype AD Glia: Parse VIA ROIs"/>
+  <meta property="twitter:description" content="This R script parses manual astrocyte, microglia, plaque, and tangle annotations created using the VGG Image Annotator tool into an ImageJ-readable format."/>
 
   <!--/radix_placeholder_meta_tags-->
   <!--radix_placeholder_rmarkdown_metadata-->
 
   <script type="text/json" id="radix-rmarkdown-metadata">
-  {"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["title","output"]}},"value":[{"type":"character","attributes":{},"value":["404 Error"]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["distill::distill_article"]}},"value":[{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["toc"]}},"value":[{"type":"logical","attributes":{},"value":[true]}]}]}]}
+  {"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["title","description","output"]}},"value":[{"type":"character","attributes":{},"value":["Parse VIA ROIs"]},{"type":"character","attributes":{},"value":["This R script parses manual astrocyte, microglia, plaque, and tangle annotations created using the VGG Image Annotator tool into an ImageJ-readable format.\n"]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["distill::distill_article"]}},"value":[{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["toc"]}},"value":[{"type":"logical","attributes":{},"value":[true]}]}]}]}
   </script>
   <!--/radix_placeholder_rmarkdown_metadata-->
   <!--radix_placeholder_navigation_in_header-->
@@ -2174,7 +2177,7 @@ code span.wa { color: #5e5e5e; font-style: italic; } /* Warning */
 <!--radix_placeholder_front_matter-->
 
 <script id="distill-front-matter" type="text/json">
-{"title":"404 Error","authors":[]}
+{"title":"Parse VIA ROIs","description":"This R script parses manual astrocyte, microglia, plaque, and tangle annotations created using the VGG Image Annotator tool into an ImageJ-readable format.","authors":[]}
 </script>
 
 <!--/radix_placeholder_front_matter-->
@@ -2224,15 +2227,161 @@ ROI Segmentation
 <!--/radix_placeholder_site_before_body-->
 
 <div class="d-title">
-<h1>404 Error</h1>
+<h1>Parse VIA ROIs</h1>
 <!--radix_placeholder_categories-->
 <!--/radix_placeholder_categories-->
-
+<p><p>This R script parses manual astrocyte, microglia, plaque, and tangle annotations created using the VGG Image Annotator tool into an ImageJ-readable format.</p></p>
 </div>
 
 
 <div class="d-article">
-<p>You may have reached this page in error. Please return to the home page, or open an issue on our <a href="https://github.com/ayushnoori/glia-ihc">GitHub repository</a>.</p>
+<div class="d-contents d-contents-float">
+<nav class="l-text toc figcaption" id="TOC">
+<h3>Contents</h3>
+<ul>
+<li><a href="#dependencies">Dependencies</a></li>
+<li><a href="#read-mappings">Read Mappings</a></li>
+<li><a href="#read-annotations">Read Annotations</a></li>
+<li><a href="#parse-annotations">Parse Annotations</a></li>
+<li><a href="#write-via-rois">Write VIA ROIs</a></li>
+</ul>
+</nav>
+</div>
+<h1 id="dependencies">Dependencies</h1>
+<p>Load requisite packages and define directories. Note that this script uses my personal utilities package <code>brainstorm</code>, which can be downloaded via <code>devtools::install_github("ayushnoori/brainstorm")</code>.</p>
+<div class="layout-chunk" data-layout="l-body">
+<div class="sourceCode">
+<pre class="sourceCode r"><code class="sourceCode r"><span class='co'># data manipulation</span>
+<span class='kw'><a href='https://rdrr.io/r/base/library.html'>library</a></span><span class='op'>(</span><span class='va'><a href='https://r-datatable.com'>data.table</a></span><span class='op'>)</span>
+<span class='kw'><a href='https://rdrr.io/r/base/library.html'>library</a></span><span class='op'>(</span><span class='va'><a href='http://purrr.tidyverse.org'>purrr</a></span><span class='op'>)</span>
+<span class='kw'><a href='https://rdrr.io/r/base/library.html'>library</a></span><span class='op'>(</span><span class='va'><a href='https://magrittr.tidyverse.org'>magrittr</a></span><span class='op'>)</span>
+
+<span class='co'># string manipulation</span>
+<span class='kw'><a href='https://rdrr.io/r/base/library.html'>library</a></span><span class='op'>(</span><span class='va'><a href='https://stringi.gagolewski.com/'>stringi</a></span><span class='op'>)</span>
+
+<span class='co'># utility functions</span>
+<span class='kw'><a href='https://rdrr.io/r/base/library.html'>library</a></span><span class='op'>(</span><span class='va'><a href='https://www.ayushnoori.com/brainstorm'>brainstorm</a></span><span class='op'>)</span>
+</code></pre>
+</div>
+</div>
+<p>Note that directories are relative to the R project path.</p>
+<div class="layout-chunk" data-layout="l-body">
+<div class="sourceCode">
+<pre class="sourceCode r"><code class="sourceCode r"><span class='co'># set directories</span>
+<span class='va'>ddir</span> <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/file.path.html'>file.path</a></span><span class='op'>(</span><span class='st'>"Data"</span>, <span class='st'>"2 - Channel Extraction"</span><span class='op'>)</span>
+<span class='va'>dir2</span> <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/file.path.html'>file.path</a></span><span class='op'>(</span><span class='st'>"Results"</span>, <span class='st'>"2 - ROI Annotations"</span><span class='op'>)</span>
+<span class='va'>dir2.1</span> <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/file.path.html'>file.path</a></span><span class='op'>(</span><span class='va'>dir2</span>, <span class='st'>"2.1 - VIA Annotations"</span><span class='op'>)</span>
+</code></pre>
+</div>
+</div>
+<h1 id="read-mappings">Read Mappings</h1>
+<p>Read mappings between true crop labels and random alphanumeric IDs generated by prior ImageJ script.</p>
+<div class="layout-chunk" data-layout="l-body">
+<div class="sourceCode">
+<pre class="sourceCode r"><code class="sourceCode r"><span class='va'>celltypes</span> <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='st'>"Astrocyte"</span>, <span class='st'>"Microglia"</span>, <span class='st'>"Plaque"</span>, <span class='st'>"Tangle"</span><span class='op'>)</span>
+
+<span class='co'># read astrocyte, microglia, and plaque mappings</span>
+<span class='va'>read_map</span> <span class='op'>=</span> <span class='kw'>function</span><span class='op'>(</span><span class='va'>celltype</span><span class='op'>)</span> <span class='op'>{</span> <span class='kw'><a href='https://rdrr.io/r/base/function.html'>return</a></span><span class='op'>(</span><span class='fu'><a href='https://Rdatatable.gitlab.io/data.table/reference/fread.html'>fread</a></span><span class='op'>(</span><span class='fu'><a href='https://rdrr.io/r/base/file.path.html'>file.path</a></span><span class='op'>(</span><span class='va'>ddir</span>, <span class='va'>celltype</span>, <span class='st'>"ID Mappings.csv"</span><span class='op'>)</span><span class='op'>)</span><span class='op'>[</span>, <span class='va'>Type</span> <span class='op'>:=</span> <span class='va'>celltype</span><span class='op'>]</span><span class='op'>)</span> <span class='op'>}</span>
+<span class='va'>IDmap</span> <span class='op'>=</span> <span class='fu'><a href='https://Rdatatable.gitlab.io/data.table/reference/rbindlist.html'>rbindlist</a></span><span class='op'>(</span><span class='fu'><a href='https://purrr.tidyverse.org/reference/map.html'>map</a></span><span class='op'>(</span><span class='va'>celltypes</span>, <span class='op'>~</span><span class='fu'>read_map</span><span class='op'>(</span><span class='va'>.x</span><span class='op'>)</span><span class='op'>)</span><span class='op'>)</span><span class='op'>[</span>, <span class='va'>V1</span> <span class='op'>:=</span> <span class='cn'>NULL</span><span class='op'>]</span>
+<span class='fu'><a href='https://Rdatatable.gitlab.io/data.table/reference/setattr.html'>setnames</a></span><span class='op'>(</span><span class='va'>IDmap</span>, <span class='st'>"Type"</span>, <span class='st'>"Group"</span><span class='op'>)</span>
+
+<span class='fu'><a href='https://www.ayushnoori.com/brainstorm/reference/show_table.html'>show_table</a></span><span class='op'>(</span><span class='fu'><a href='https://rdrr.io/r/utils/head.html'>head</a></span><span class='op'>(</span><span class='va'>IDmap</span>, <span class='fl'>20</span><span class='op'>)</span><span class='op'>)</span>
+</code></pre>
+</div>
+</div>
+<h1 id="read-annotations">Read Annotations</h1>
+<p>Read VGG Image Annotator (VIA) annotations from the output <code>.csv</code> files.</p>
+<div class="layout-chunk" data-layout="l-body">
+<div class="sourceCode">
+<pre class="sourceCode r"><code class="sourceCode r"><span class='va'>flist</span> <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/list.files.html'>list.files</a></span><span class='op'>(</span>path <span class='op'>=</span> <span class='va'>dir2.1</span>, pattern <span class='op'>=</span> <span class='st'>"\\.csv$"</span><span class='op'>)</span>
+
+<span class='co'># function to read annotations</span>
+<span class='va'>read_annot</span> <span class='op'>=</span> <span class='kw'>function</span><span class='op'>(</span><span class='va'>file</span><span class='op'>)</span> <span class='op'>{</span>
+  <span class='fu'><a href='https://Rdatatable.gitlab.io/data.table/reference/fread.html'>fread</a></span><span class='op'>(</span><span class='fu'><a href='https://rdrr.io/r/base/file.path.html'>file.path</a></span><span class='op'>(</span><span class='va'>dir2.1</span>, <span class='va'>file</span><span class='op'>)</span><span class='op'>)</span> <span class='op'>%&gt;%</span>
+    <span class='va'>.</span><span class='op'>[</span>, <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='st'>"Annotator"</span>, <span class='st'>"Group"</span><span class='op'>)</span> <span class='op'>:=</span> <span class='fu'><a href='https://rdrr.io/r/base/list.html'>as.list</a></span><span class='op'>(</span><span class='fu'><a href='https://rdrr.io/pkg/stringi/man/stri_split.html'>stri_split_fixed</a></span><span class='op'>(</span><span class='va'>file</span>, <span class='st'>"_"</span>, simplify <span class='op'>=</span> <span class='cn'>T</span><span class='op'>)</span><span class='op'>[</span><span class='fl'>1</span><span class='op'>:</span><span class='fl'>2</span><span class='op'>]</span><span class='op'>)</span><span class='op'>]</span> <span class='op'>%&gt;%</span>
+    <span class='kw'><a href='https://rdrr.io/r/base/function.html'>return</a></span><span class='op'>(</span><span class='op'>)</span>
+<span class='op'>}</span>
+
+<span class='co'># read annotations</span>
+<span class='va'>annot</span> <span class='op'>=</span> <span class='fu'><a href='https://Rdatatable.gitlab.io/data.table/reference/rbindlist.html'>rbindlist</a></span><span class='op'>(</span><span class='fu'><a href='https://purrr.tidyverse.org/reference/map.html'>map</a></span><span class='op'>(</span><span class='va'>flist</span>, <span class='op'>~</span><span class='fu'>read_annot</span><span class='op'>(</span><span class='va'>.x</span><span class='op'>)</span><span class='op'>)</span><span class='op'>)</span>
+
+<span class='co'># remove empty file labels and .png extension suffix</span>
+<span class='va'>annot</span> <span class='op'>=</span> <span class='va'>annot</span> <span class='op'>%&gt;%</span>
+  <span class='va'>.</span><span class='op'>[</span><span class='va'>region_shape_attributes</span> <span class='op'>!=</span> <span class='st'>"{}"</span>, <span class='op'>]</span> <span class='op'>%&gt;%</span>
+  <span class='va'>.</span><span class='op'>[</span>, <span class='va'>Filename</span> <span class='op'>:=</span> <span class='fu'><a href='https://rdrr.io/r/base/grep.html'>gsub</a></span><span class='op'>(</span><span class='st'>".png"</span>, <span class='st'>""</span>, <span class='va'>filename</span><span class='op'>)</span><span class='op'>]</span> <span class='op'>%&gt;%</span>
+  <span class='va'>.</span><span class='op'>[</span>, <span class='va'>Annotator</span> <span class='op'>:=</span> <span class='fu'><a href='https://rdrr.io/r/base/factor.html'>factor</a></span><span class='op'>(</span><span class='va'>Annotator</span>, levels <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='st'>"alberto"</span>, <span class='st'>"ayush"</span>, <span class='st'>"clara"</span><span class='op'>)</span>, labels <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='st'>"ASP"</span>, <span class='st'>"AN"</span>, <span class='st'>"CMC"</span><span class='op'>)</span><span class='op'>)</span><span class='op'>]</span> <span class='op'>%&gt;%</span>
+  <span class='va'>.</span><span class='op'>[</span>, <span class='va'>Group</span> <span class='op'>:=</span> <span class='fu'><a href='https://rdrr.io/r/base/factor.html'>factor</a></span><span class='op'>(</span><span class='va'>Group</span>, levels <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='st'>"astrocyte"</span>, <span class='st'>"microglia"</span>, <span class='st'>"plaque"</span>, <span class='st'>"tangle"</span><span class='op'>)</span>, labels <span class='op'>=</span> <span class='va'>celltypes</span><span class='op'>)</span><span class='op'>]</span>
+
+<span class='fu'><a href='https://www.ayushnoori.com/brainstorm/reference/show_table.html'>show_table</a></span><span class='op'>(</span><span class='va'>annot</span><span class='op'>[</span><span class='fu'><a href='https://rdrr.io/r/base/sample.html'>sample</a></span><span class='op'>(</span><span class='fu'><a href='https://rdrr.io/r/base/nrow.html'>nrow</a></span><span class='op'>(</span><span class='va'>annot</span><span class='op'>)</span>, <span class='fl'>40</span><span class='op'>)</span>, <span class='op'>]</span><span class='op'>)</span>
+</code></pre>
+</div>
+</div>
+<h1 id="parse-annotations">Parse Annotations</h1>
+<p>Define function to parse VIA annotations into format readable by ImageJ. To conform with ImageJ naming conventions, the cell-type of each ROI is specified by <code>Group</code>, while the subtype (e.g., <code>compact</code> vs. <code>diffuse</code> or <code>soma</code> vs. <code>process</code>) is specified by <code>type</code>.</p>
+<div class="layout-chunk" data-layout="l-body">
+<div class="sourceCode">
+<pre class="sourceCode r"><code class="sourceCode r"><span class='co'># define function to parse label based on VIA output</span>
+<span class='va'>parse_label</span> <span class='op'>=</span> <span class='kw'>function</span><span class='op'>(</span><span class='va'>label</span>, <span class='va'>grp</span> <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='st'>"region"</span>, <span class='st'>"region_shape"</span><span class='op'>)</span><span class='op'>)</span> <span class='op'>{</span>
+  
+  <span class='va'>label</span> <span class='op'>=</span> <span class='va'>label</span> <span class='op'>%&gt;%</span>
+    <span class='fu'><a href='https://Rdatatable.gitlab.io/data.table/reference/tstrsplit.html'>strsplit</a></span><span class='op'>(</span><span class='va'>.</span>, <span class='st'>","</span>, fixed <span class='op'>=</span> <span class='cn'>TRUE</span><span class='op'>)</span> <span class='op'>%&gt;%</span> <span class='va'>.</span><span class='op'>[[</span><span class='fl'>1</span><span class='op'>]</span><span class='op'>]</span> <span class='op'>%&gt;%</span> <span class='co'># split by comma to separate vars</span>
+    <span class='fu'><a href='https://rdrr.io/r/base/grep.html'>gsub</a></span><span class='op'>(</span><span class='st'>"[{, }, \"]"</span>, <span class='st'>""</span>, <span class='va'>.</span><span class='op'>)</span> <span class='op'>%&gt;%</span> <span class='co'># remove brackets and quotes </span>
+    <span class='fu'><a href='https://Rdatatable.gitlab.io/data.table/reference/tstrsplit.html'>strsplit</a></span><span class='op'>(</span><span class='va'>.</span>, <span class='st'>":"</span><span class='op'>)</span>
+  
+  <span class='co'># extract second elements in list, then assign first elements as names</span>
+  <span class='va'>parsed</span> <span class='op'>=</span> <span class='fu'><a href='https://purrr.tidyverse.org/reference/map.html'>map</a></span><span class='op'>(</span><span class='va'>label</span>, <span class='fl'>2</span><span class='op'>)</span>
+  <span class='fu'><a href='https://rdrr.io/r/base/names.html'>names</a></span><span class='op'>(</span><span class='va'>parsed</span><span class='op'>)</span> <span class='op'>=</span> <span class='fu'><a href='https://purrr.tidyverse.org/reference/map.html'>map_chr</a></span><span class='op'>(</span><span class='va'>label</span>, <span class='fl'>1</span><span class='op'>)</span>
+  
+  <span class='co'># replace tangle annotation name</span>
+  <span class='kw'>if</span><span class='op'>(</span><span class='st'>"tangle"</span> <span class='op'>%in%</span> <span class='fu'><a href='https://rdrr.io/r/base/names.html'>names</a></span><span class='op'>(</span><span class='va'>parsed</span><span class='op'>)</span><span class='op'>)</span> <span class='op'>{</span> <span class='fu'><a href='https://rdrr.io/r/base/names.html'>names</a></span><span class='op'>(</span><span class='va'>parsed</span><span class='op'>)</span> <span class='op'>=</span> <span class='st'>"type"</span>; <span class='va'>parsed</span><span class='op'>[[</span><span class='st'>"quality"</span><span class='op'>]</span><span class='op'>]</span> <span class='op'>=</span> <span class='st'>"none"</span> <span class='op'>}</span>
+
+  <span class='co'># return statement</span>
+  <span class='kw'>if</span><span class='op'>(</span><span class='va'>grp</span> <span class='op'>==</span> <span class='st'>"region"</span><span class='op'>)</span> <span class='kw'><a href='https://rdrr.io/r/base/function.html'>return</a></span><span class='op'>(</span><span class='va'>parsed</span><span class='op'>[</span><span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='st'>"type"</span>, <span class='st'>"quality"</span><span class='op'>)</span><span class='op'>]</span><span class='op'>)</span> <span class='kw'>else</span> <span class='kw'><a href='https://rdrr.io/r/base/function.html'>return</a></span><span class='op'>(</span><span class='va'>parsed</span><span class='op'>[</span><span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='st'>"x"</span>, <span class='st'>"y"</span>, <span class='st'>"width"</span>, <span class='st'>"height"</span><span class='op'>)</span><span class='op'>]</span><span class='op'>)</span>
+  
+<span class='op'>}</span>
+</code></pre>
+</div>
+</div>
+<p>Apply <code>parse_label</code> function to VIA annotations, and join with <code>IDmap</code>.</p>
+<div class="layout-chunk" data-layout="l-body">
+<div class="sourceCode">
+<pre class="sourceCode r"><code class="sourceCode r"><span class='co'># parse annotations</span>
+<span class='va'>annot</span> <span class='op'>=</span> <span class='va'>annot</span> <span class='op'>%&gt;%</span>
+  <span class='va'>.</span><span class='op'>[</span>, <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='st'>"Type"</span>, <span class='st'>"Quality"</span><span class='op'>)</span> <span class='op'>:=</span> <span class='fu'><a href='https://purrr.tidyverse.org/reference/map.html'>map_dfr</a></span><span class='op'>(</span><span class='va'>region_attributes</span>, <span class='op'>~</span><span class='fu'>parse_label</span><span class='op'>(</span><span class='va'>.x</span>, <span class='st'>"region"</span><span class='op'>)</span><span class='op'>)</span><span class='op'>]</span> <span class='op'>%&gt;%</span>
+  <span class='va'>.</span><span class='op'>[</span>, <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='st'>"X"</span>, <span class='st'>"Y"</span>, <span class='st'>"Width"</span>, <span class='st'>"Height"</span><span class='op'>)</span> <span class='op'>:=</span> <span class='fu'><a href='https://purrr.tidyverse.org/reference/map.html'>map_dfr</a></span><span class='op'>(</span><span class='va'>region_shape_attributes</span>, <span class='op'>~</span><span class='fu'>parse_label</span><span class='op'>(</span><span class='va'>.x</span>, <span class='st'>"region_shape"</span><span class='op'>)</span><span class='op'>)</span><span class='op'>]</span> <span class='op'>%&gt;%</span>
+  <span class='va'>.</span><span class='op'>[</span><span class='va'>Type</span> <span class='op'>==</span> <span class='st'>"vessel"</span>, <span class='va'>Group</span> <span class='op'>:=</span> <span class='st'>"Vessel"</span><span class='op'>]</span> <span class='op'>%&gt;%</span>
+  <span class='va'>.</span><span class='op'>[</span>, <span class='va'>filename</span> <span class='op'>:=</span> <span class='fu'><a href='https://rdrr.io/r/base/grep.html'>gsub</a></span><span class='op'>(</span><span class='st'>".png"</span>, <span class='st'>""</span>, <span class='va'>filename</span><span class='op'>)</span><span class='op'>]</span>
+
+<span class='co'># join with ID mapping information, consolidate microglia and plaque categories, order table</span>
+<span class='va'>IDmap</span><span class='op'>[</span>, <span class='va'>Group</span> <span class='op'>:=</span> <span class='cn'>NULL</span><span class='op'>]</span>
+<span class='va'>dat</span> <span class='op'>=</span> <span class='fu'><a href='https://Rdatatable.gitlab.io/data.table/reference/merge.html'>merge</a></span><span class='op'>(</span><span class='va'>IDmap</span>, <span class='va'>annot</span>, by.x <span class='op'>=</span> <span class='st'>"ID"</span>, by.y <span class='op'>=</span> <span class='st'>"filename"</span>, all.y <span class='op'>=</span> <span class='cn'>TRUE</span><span class='op'>)</span> <span class='op'>%&gt;%</span>
+  <span class='va'>.</span><span class='op'>[</span>, <span class='fu'>.</span><span class='op'>(</span><span class='va'>Sample</span>, <span class='va'>Layer</span>, <span class='va'>Crop</span>, <span class='va'>Condition</span>, <span class='va'>File</span>, <span class='va'>Group</span>, <span class='va'>X</span>, <span class='va'>Y</span>, <span class='va'>Width</span>, <span class='va'>Height</span>, <span class='va'>Type</span>, <span class='va'>Quality</span>, <span class='va'>Annotator</span><span class='op'>)</span><span class='op'>]</span> <span class='op'>%&gt;%</span> 
+  <span class='va'>.</span><span class='op'>[</span><span class='fu'><a href='https://Rdatatable.gitlab.io/data.table/reference/setorder.html'>order</a></span><span class='op'>(</span><span class='va'>Sample</span>, <span class='va'>Layer</span>, <span class='va'>Crop</span>, <span class='va'>Group</span>, <span class='fu'><a href='https://rdrr.io/r/base/numeric.html'>as.numeric</a></span><span class='op'>(</span><span class='va'>X</span><span class='op'>)</span><span class='op'>)</span>, <span class='op'>]</span>
+
+<span class='co'># total ROI count</span>
+<span class='fu'><a href='https://rdrr.io/r/base/summary.html'>summary</a></span><span class='op'>(</span><span class='fu'><a href='https://rdrr.io/r/base/factor.html'>factor</a></span><span class='op'>(</span><span class='va'>dat</span><span class='op'>[</span>, <span class='va'>Group</span><span class='op'>]</span><span class='op'>)</span><span class='op'>)</span>
+<span class='fu'><a href='https://www.ayushnoori.com/brainstorm/reference/show_table.html'>show_table</a></span><span class='op'>(</span><span class='va'>dat</span><span class='op'>[</span><span class='fu'><a href='https://rdrr.io/r/base/sample.html'>sample</a></span><span class='op'>(</span><span class='fu'><a href='https://rdrr.io/r/base/nrow.html'>nrow</a></span><span class='op'>(</span><span class='va'>dat</span><span class='op'>)</span>, <span class='fl'>40</span><span class='op'>)</span>, <span class='op'>]</span><span class='op'>)</span>
+</code></pre>
+</div>
+</div>
+<h1 id="write-via-rois">Write VIA ROIs</h1>
+<p>Write VIA ROIs to appropriate output.</p>
+<div class="layout-chunk" data-layout="l-body">
+<div class="sourceCode">
+<pre class="sourceCode r"><code class="sourceCode r"><span class='co'># remove prior output</span>
+<span class='va'>rmlist</span> <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/list.files.html'>list.files</a></span><span class='op'>(</span>path <span class='op'>=</span> <span class='va'>dir2</span>, pattern <span class='op'>=</span> <span class='st'>"\\.csv$"</span><span class='op'>)</span>
+<span class='kw'>for</span> <span class='op'>(</span><span class='va'>rm</span> <span class='kw'>in</span> <span class='va'>rmlist</span><span class='op'>)</span><span class='op'>{</span> <span class='fu'><a href='https://rdrr.io/r/base/files.html'>file.remove</a></span><span class='op'>(</span><span class='fu'><a href='https://rdrr.io/r/base/file.path.html'>file.path</a></span><span class='op'>(</span><span class='va'>dir2</span>, <span class='va'>rm</span><span class='op'>)</span><span class='op'>)</span> <span class='op'>}</span>
+
+<span class='co'># write file list</span>
+<span class='va'>files</span> <span class='op'>=</span> <span class='fu'><a href='https://Rdatatable.gitlab.io/data.table/reference/duplicated.html'>unique</a></span><span class='op'>(</span><span class='va'>dat</span><span class='op'>$</span><span class='va'>File</span><span class='op'>)</span>
+<span class='fu'><a href='https://rdrr.io/r/base/cat.html'>cat</a></span><span class='op'>(</span><span class='fu'><a href='https://rdrr.io/r/base/paste.html'>paste0</a></span><span class='op'>(</span><span class='st'>"Annotated Crops: "</span>, <span class='fu'><a href='https://rdrr.io/r/base/length.html'>length</a></span><span class='op'>(</span><span class='va'>files</span><span class='op'>)</span>, <span class='st'>"\n"</span><span class='op'>)</span><span class='op'>)</span>
+<span class='fu'><a href='https://rdrr.io/r/base/write.html'>write</a></span><span class='op'>(</span><span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='st'>"Annotated TIFFs"</span>, <span class='va'>files</span><span class='op'>)</span>, <span class='fu'><a href='https://rdrr.io/r/base/file.path.html'>file.path</a></span><span class='op'>(</span><span class='va'>dir2</span>, <span class='st'>"Annotated TIFFs.txt"</span><span class='op'>)</span><span class='op'>)</span>
+
+<span class='co'># save VIA annotations of each crop after ordering by Type, then X coord.</span>
+<span class='fu'><a href='https://purrr.tidyverse.org/reference/map.html'>walk</a></span><span class='op'>(</span><span class='va'>files</span>, <span class='op'>~</span><span class='fu'><a href='https://Rdatatable.gitlab.io/data.table/reference/fwrite.html'>fwrite</a></span><span class='op'>(</span><span class='va'>dat</span><span class='op'>[</span><span class='va'>File</span> <span class='op'>==</span> <span class='va'>.x</span>, <span class='op'>]</span>, <span class='fu'><a href='https://rdrr.io/r/base/file.path.html'>file.path</a></span><span class='op'>(</span><span class='va'>dir2</span>, <span class='fu'><a href='https://rdrr.io/r/base/paste.html'>paste0</a></span><span class='op'>(</span><span class='va'>.x</span>, <span class='st'>".csv"</span><span class='op'>)</span><span class='op'>)</span><span class='op'>)</span><span class='op'>)</span>
+</code></pre>
+</div>
+</div>
 <div class="sourceCode" id="cb1"><pre class="sourceCode r distill-force-highlighting-css"><code class="sourceCode r"></code></pre></div>
 <!--radix_placeholder_article_footer-->
 <!--/radix_placeholder_article_footer-->

@@ -1,0 +1,447 @@
+---
+title: "ROI Segmentation"
+description: |
+ This ImageJ script segments the manually-defined ROIs from the multi-channel TIFFs.
+output:
+  distill::distill_article:
+    toc: true
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(eval = FALSE)
+```
+
+# Setup
+
+This script is written in the ImageJ Macro Language (IJM). For readability, the single macro has been divided into several sections here. First, the requisite directories, cell-type groups, and measurements are defined.
+
+``` {.ijm .IJM}
+macro "ROI Segmentation [m]" {
+
+	setBatchMode(true);
+
+	// define paths
+	dir = "<insert your directory here>";
+	dir2 = dir + "Results/2 - ROI Annotations/";
+	outdir = dir + "Data/3 - ROIs/";
+
+	getDateAndTime(year, month, dayOfWeek, dayOfMonth, hour, minute, second, msec);
+	MonthNames = newArray("Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec");
+	print("MULTIPLEX IHC ROI EXTRACTION");
+	print("DATE: " + MonthNames[month] + ". " + dayOfMonth + ", " + year);
+	print("START TIME: " + hour + ":" + minute + ":" + second);
+	
+
+	// define cell-type groups
+	celldirs = newArray("Astrocyte ROIs/", "Microglia ROIs/", "Vessel ROIs/", "Plaque ROIs/", "Tangle ROIs/");
+	Roi.setGroupNames("astrocyte,microglia,vessel,plaque,tangle");
+
+	// get input directory for final TIFF crops
+	input = getDirectory("Choose input data folder with full TIFF crops.");
+	// input = dir + "Data/1 - Test Crops/";
+	files = getFileList(input);
+	// Array.show(files);
+
+	// set measurements to be applied on ROIs
+	run("Set Measurements...", "area mean standard modal min centroid center perimeter bounding shape feret's integrated median skewness area_fraction stack display redirect=None decimal=3");	
+	
+	// open list of TIFF files which have annotations
+	run("Table... ", "open=[" + dir2 + "Annotated TIFFs.txt]");
+	Table.rename("Annotated TIFFs.txt", "TIFFs");
+```
+
+# Retrieve TIFFs
+
+Next, the list of annotated TIFF files is retrieved and iterated over.
+
+``` {.ijm .IJM}
+	////////////////////////////////////////////////////////////
+	/////  GET TIFF LIST AND OPEN FILES
+	////////////////////////////////////////////////////////////
+
+	tiffs = Table.getColumn("Annotated TIFFs", "TIFFs");
+	selectWindow("TIFFs");
+	run("Close");
+	// Array.show(tiffs);
+
+	for (f = 0; f < tiffs.length; f++) {
+
+		fname = tiffs[f];
+		print(""); // add new line
+		print("-------- " + f+1 + "/" + tiffs.length + ": " + fname + " --------");
+		
+		open(input + fname + "_Reordered.tif");
+		Roi.remove; // remove active selection, if any
+
+		image = getTitle(); // get crop title
+		selectImage(image); // shift focus to the selected crop
+
+		// normalize with rolling ball filter
+		run("Subtract Background...", "rolling=200 stack");
+```
+
+# Background Subtraction
+
+For each TIFF file, rolling ball background subtraction is applied with a radius of 200 pixels.
+
+``` {.ijm .IJM}
+		// perform background subtraction with rolling ball filter
+		run("Subtract Background...", "rolling=200 stack");
+```
+
+# Define Metadata
+
+The condition of each sample (i.e., CTRL or AD) is defined, and the pixel-to-micron resolution is extracted from the metadata.
+
+``` {.ijm .IJM}
+		////////////////////////////////////////////////////////////
+		/////  CLASSIFY SAMPLE CONDITION
+		////////////////////////////////////////////////////////////
+		
+		sample = split(fname, "_"); // sample condition classified again
+		sample = sample[0];
+		
+		if (sample == "1190" || sample == "1301" || sample == "1619" || sample == "2169" || sample == "2191" || sample == "2250" || sample == "2274") {
+			condition = "CTRL";
+		} else {
+			condition = "AD";
+		}
+		
+		// create output directory
+		output = outdir + condition + "/" + fname;
+		File.makeDirectory(output);
+
+		// print condition
+		print("Condition: " + condition);
+
+		// extract pixel to micron conversion which is preserved in TIFF metadata
+		info = getImageInfo();
+		res = substring(info, indexOf(info, "X Resolution: "), indexOf(info, "Y Resolution: "));
+		res = split(res, " ");
+		res = res[2];
+		run("Set Scale...", "distance=" + res + " known=1 pixel=1.000 unit=micron"); // set scale in pixels/micron
+
+		// print resolution
+		print("Resolution: " + res + " pixels per micron");
+		File.saveString(res, output + "/" + fname + "_Resolution.txt") 
+```
+
+# Create ROIs
+
+ROIs are created from the parsed VGG Image Annotator (VIA) annotations.
+
+``` {.ijm .IJM}
+		////////////////////////////////////////////////////////////
+		/////  OPEN ROI LIST AND CREATE ROIS
+		////////////////////////////////////////////////////////////
+
+		// open parsed VIA annotations for this crop
+		run("Table... ", "open=[" + dir2 + fname + ".csv]");
+		cname = fname + " Coordinates";
+		Table.rename(fname + ".csv", cname);
+		selectWindow(cname);
+
+		// define ROI arrays from VIA annotations
+		X = Table.getColumn("X", cname);
+		Y = Table.getColumn("Y", cname);
+		width = Table.getColumn("Width", cname);
+		height = Table.getColumn("Height", cname);
+		group = Table.getColumn("Group", cname);
+
+		// define property arrays from VIA annotations
+		type = Table.getColumn("Type", cname);
+		quality = Table.getColumn("Quality", cname);
+		annotator = Table.getColumn("Annotator", cname);
+		
+		// shift focus to image
+		selectWindow(image);
+		// setSlice(2); // change slice to membrane marker
+
+		// set counter for astrocytes and vessels
+		a = 0; m = 0; v = 0; p = 0; t = 0;
+
+		// iterate over annotated regions to create ROIs
+		for (i = 0; i < X.length; i++) {
+
+			makeRectangle(X[i], Y[i], width[i], height[i]);
+			roiManager("add");
+			roiManager("Select", i);
+
+			if(group[i] == "astrocyte") {
+				Roi.setGroup(236);
+				Roi.setProperty("Type", type[i]);
+				Roi.setProperty("Quality", quality[i]);
+				Roi.setProperty("Annotator", annotator[i]);
+				roiManager("update");
+				a = a + 1; roiManager("rename", "Astrocyte" + a);
+			}
+			
+			if(group[i] == "microglia") {
+				Roi.setGroup(227);
+				Roi.setProperty("Type", type[i]);
+				Roi.setProperty("Quality", quality[i]);
+				Roi.setProperty("Annotator", annotator[i]);
+				roiManager("update");
+				m = m + 1; roiManager("rename", "Microglia" + m);
+			}
+			
+			if(group[i] == "vessel") {
+				Roi.setGroup(87);
+				Roi.setProperty("Type", type[i]);
+				Roi.setProperty("Quality", quality[i]);
+				Roi.setProperty("Annotator", annotator[i]);
+				roiManager("update");
+				v = v + 1; roiManager("rename", "Vessel" + v);
+			}
+
+			if(group[i] == "plaque") {
+				Roi.setGroup(27);
+				Roi.setProperty("Type", type[i]);
+				Roi.setProperty("Quality", quality[i]);
+				Roi.setProperty("Annotator", annotator[i]);
+				roiManager("update");
+				p = p + 1; roiManager("rename", "Plaque" + p);
+			}
+
+			if(group[i] == "tangle") {
+				Roi.setGroup(114);
+				Roi.setProperty("Type", type[i]);
+				Roi.setProperty("Quality", quality[i]);
+				Roi.setProperty("Annotator", annotator[i]);
+				roiManager("update");
+				t = t + 1; roiManager("rename", "Tangle" + t);
+			}
+
+
+			
+		}
+
+		print("# of Astrocytes: " + a);
+		print("# of Microglia: " + m);
+		print("# of Vessels: " + v);
+		print("# of Plaques: " + p);
+		print("# of Tangles: " + t);
+```
+
+# Save ROI Coordinates
+
+Coordinates of each ROI are saved.
+
+``` {.ijm .IJM}
+		////////////////////////////////////////////////////////////
+		/////  SAVE ROI COORDINATES
+		////////////////////////////////////////////////////////////
+
+		// save ROI coordinates to compare with ABETA plaques
+		// these coordinates are relative to entire crop
+		// ROI extraction only saves coordinates relative to smaller VIA annotation
+		roiManager("List");
+		rname = fname + " ROIs";
+		Table.rename("Overlay Elements of " + image, rname);
+
+		// create empty arrays
+		nROI = roiManager("Count");
+		property_type = newArray(nROI); 
+		property_quality = newArray(nROI); 
+		property_annotator = newArray(nROI);
+		
+		// get ROI properties
+		for (k = 0; k < nROI; k++) {
+			roiManager("Select", k);
+			property_type[k] = Roi.getProperty("Type");
+			property_quality[k] = Roi.getProperty("Quality");
+			property_annotator[k] = Roi.getProperty("Annotator");
+		}
+
+		// add to Table
+		Table.setColumn("Type", property_type, rname);
+		Table.setColumn("Quality", property_quality, rname);
+		Table.setColumn("Annotator", property_annotator, rname);
+		
+		// save coordinates
+		selectWindow(rname);
+		saveAs("Results", output + "/" + fname + "_ROIs.csv");
+
+		// wipe results
+		Table.reset(fname + "_ROIs.csv");
+		selectWindow(fname + "_ROIs.csv");
+		run("Close");
+```
+
+# ROI Segmentation
+
+For each newly-created ROI, the sub-image is segmented from the TIFF file. After adaptive thresholding using Otsu's method, the mean gray intensity (MGI) of each channel is measured. Finally, each ROI is interpolated to a 64 x 64 image as input to the convolutional neural network (CNN).
+
+
+``` {.ijm .IJM}
+		////////////////////////////////////////////////////////////
+		/////  ROI SEGMENTATION
+		////////////////////////////////////////////////////////////
+
+		// create ROI directories
+		dirA = output + "/" + celldirs[0];
+		dirM = output + "/" + celldirs[1];
+		dirV = output + "/" + celldirs[2];
+		dirP = output + "/" + celldirs[3];
+		dirT = output + "/" + celldirs[4];
+		File.makeDirectory(dirA); File.makeDirectory(dirA + "/ROIs");
+		File.makeDirectory(dirM); File.makeDirectory(dirM + "/ROIs");
+		File.makeDirectory(dirV); File.makeDirectory(dirV + "/ROIs");
+		File.makeDirectory(dirP); File.makeDirectory(dirP + "/ROIs");
+		File.makeDirectory(dirT); File.makeDirectory(dirT + "/ROIs");
+
+		// get total number of ROIs
+		nROI = roiManager("Count");
+
+		// show all ROIs
+		roiManager("show all with labels");
+		a = 0; m = 0; v = 0; p = 0; t = 0;
+		mycounter = 0;
+		
+		
+		for (k = 0; k < nROI; k++) {
+			
+			// duplicate ROI
+			roiManager("Select", k);
+			if (Roi.getGroup() == 236) { cellname = "Astrocyte"; celldir = dirA; a = a + 1; mycounter = a; }
+			if (Roi.getGroup() == 227) { cellname = "Microglia"; celldir = dirM; m = m + 1; mycounter = m; }
+			if (Roi.getGroup() == 87) { cellname = "Vessel"; celldir = dirV; v = v + 1; mycounter = v; }
+			if (Roi.getGroup() == 27) { cellname = "Plaque"; celldir = dirP; p = p + 1; mycounter = p; }
+			if (Roi.getGroup() == 114) { cellname = "Tangle"; celldir = dirT; t = t + 1; mycounter = t; }
+			ROIname = cellname + mycounter;
+			run("Duplicate...", "title=" + ROIname + " duplicate");
+
+
+			////////////////////////////////////////////////////////////
+			/////  CREATE INSIDE ROI AND REMOVE BACKGROUND
+			////////////////////////////////////////////////////////////
+
+			if (cellname == "Astrocyte" || cellname == "Vessel") {
+				run("Duplicate...", "title=MarkerMask duplicate channels=2"); // duplicate ALDH1L1	
+			}
+			else if (cellname == "Microglia") {
+				run("Duplicate...", "title=MarkerMask duplicate channels=3"); // duplicate IBA1
+			} else if (cellname == "Plaque") {
+				run("Duplicate...", "title=MarkerMask duplicate channels=16"); // duplicate ABETA
+			} else {
+				run("Duplicate...", "title=MarkerMask duplicate channels=17"); // duplicate PHF1
+			}
+
+			// auto-threshold using Otsu method
+			run("Auto Threshold", "method=Otsu white");
+			run("Analyze Particles...", "include add stack");
+			selectWindow("MarkerMask");
+			close();
+
+
+			// create array to select only new ROIs
+			selectWindow(ROIname);
+			oldROIs = Array.getSequence(nROI);
+			newROIs = Array.getSequence(roiManager("Count"));
+
+			// ONLY if new ROIs have been added
+			if (roiManager("Count") > nROI) {
+
+
+				// delete preexisting ROI indices from new ROI array 
+				for (r = 0; r < oldROIs.length; r++) {
+					newROIs = Array.deleteIndex(newROIs, 0);
+				}
+	
+				// combine multiple ROIs if more than one was created
+				if(newROIs.length > 1) {
+					roiManager("select", newROIs);
+					roiManager("combine");
+					roiManager("add");
+					roiManager("select", newROIs);
+					roiManager("delete");
+				}
+
+						
+				// clear outside of ROI
+				roiManager("Select", nROI);
+				roiManager("rename", cellname + mycounter + "_ROI");
+				// setBackgroundColor(255, 255, 255);
+				setBackgroundColor(0, 0, 0);
+				run("Clear Outside", "stack");
+
+
+
+				////////////////////////////////////////////////////////////
+				/////  MEASURE AND SAVE ROI
+				////////////////////////////////////////////////////////////
+
+				// measure each channel based on new ROI
+				for (s = 1; s <= nSlices; s++) {
+					setSlice(s);
+					run("Measure");										
+				}
+				
+				// scale for CNN and save
+				run("Size...", "width=64 height=64 average interpolation=None"); // no interpolation keeps edge of ROI sharp
+				saveAs("Tiff", celldir + "/" + condition + "_" + fname + "_" + cellname + mycounter + ".tif"); // save in crop specific folder
+	
+	
+				// save ROI
+				roiManager("Select", nROI);
+				roiManager("save selected", celldir + "/ROIs/" + condition + "_" + fname + "_" + cellname + mycounter + ".roi")
+				roiManager("delete");
+
+			} else { // if no ROI was created
+				print("ROI #" + k + " NOT CREATED: " + cellname + " " + mycounter);
+			}
+
+			// close image window
+			close();
+			
+		}
+```
+
+# Save Measurements
+
+For each TIFF image, the ROI measurements are saved and the image is closed.
+
+``` {.ijm .IJM}
+		////////////////////////////////////////////////////////////
+		/////  SAVE AND CLOSE CROP
+		////////////////////////////////////////////////////////////
+
+		// update ROI manager GUI for output
+		roiManager("show all with labels");
+
+		// save results
+		saveAs("Results", output + "/" + fname + "_Measurements.csv");
+
+		// save ROIs to ZIP file
+		roiManager("Save", output + "/" + fname + "_ROIs.zip");
+		
+		// save original image
+		saveAs("Tiff", output + "/" + fname + "_Crop.tif");
+
+		// clear all results
+		Table.reset("Results");
+		roiManager("reset");
+		
+		// close VIA annotations
+		selectWindow(cname);
+		run("Close");
+
+		// close crop
+		selectWindow(fname + "_Crop.tif");
+		close();
+
+		
+	}
+
+	selectWindow("Results");
+	run("Close")
+
+	print(""); // add new line
+	getDateAndTime(year, month, dayOfWeek, dayOfMonth, hour, minute, second, msec);
+	print("END TIME: " + hour + ":" + minute + ":" + second);
+
+	selectWindow("Log");
+	saveAs("text", outdir + "Log.txt"); // save in crop specific folder
+
+}
+```

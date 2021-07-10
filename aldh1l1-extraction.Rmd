@@ -1,0 +1,113 @@
+---
+title: "Astrocyte Annotation"
+description: |
+ This ImageJ script extracts the ALDH1L1 channel from multi-channel TIFF images and assigns each image a random alphanumeric code for blinded astrocyte annotation.
+output:
+  distill::distill_article:
+    toc: true
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(eval = FALSE)
+```
+
+This script is written in the ImageJ Macro Language (IJM).
+
+``` {.ijm .IJM}
+macro "ALDH1L1 Channel Extraction" {
+
+	setBatchMode(true);
+
+	input = getDirectory("Choose input data folder.");
+	files = getFileList(input);
+	// Array.show(files);
+
+	dir = "<insert your directory here>";
+	datadir = dir + "Data/2 - Channel Extraction/Astrocyte/";
+
+
+	////////////////////////////////////////////////////////////
+	/////  FUNCTION FOR RANDOM ID
+	////////////////////////////////////////////////////////////
+	
+	function randomString(length, chars) {
+		result = "";
+		for (i = 0; i < length; i++) {
+			maxlen = lengthOf(chars)-1;
+			rand = round(random * maxlen);
+			result +=  substring(chars, rand, rand+1);
+		}
+		return result;
+	}
+
+
+	////////////////////////////////////////////////////////////
+	/////  ITERATE OVER IMAGES
+	////////////////////////////////////////////////////////////
+	
+	for (f = 0; f < files.length; f++) {
+
+		open(input + files[f]);
+		Roi.remove; // remove active selection, if any
+	
+		////////////////////////////////////////////////////////////
+		/////  LOAD IMAGE + DEFINE MARKERS
+		////////////////////////////////////////////////////////////
+		
+		image = getTitle(); // get crop title
+		selectImage(image); // shift focus to the selected crop
+		filename = substring(image, 0, indexOf(image, "_Reordered.tif"));
+		
+		splitname = split(filename, "_");	
+		sample = splitname[0];
+		layer = splitname[1];
+		crop = splitname[2];
+		crop = substring(crop, 4);
+		
+		if (sample == "1190" || sample == "1301" || sample == "1619" || sample == "2169" || sample == "2191" || sample == "2250" || sample == "2274") {
+			condition = "CTRL";
+		} else {
+			condition = "AD";
+		}
+		
+		print(filename);
+
+		////////////////////////////////////////////////////////////
+		/////  RANDOMIZE CROP
+		////////////////////////////////////////////////////////////
+
+		id = randomString(6, "0123456789abcdefghijklmnopqrstuvwxyz");
+		// print(id);
+
+		Table.set("ID", f, id);
+		Table.set("Sample", f, sample);
+		Table.set("Layer", f, layer);
+		Table.set("Crop", f, crop);
+		Table.set("Condition", f, condition);
+		Table.set("File", f, filename);
+		Table.update();
+	
+		////////////////////////////////////////////////////////////
+		/////  SAVE ALDH1L1 CHANNEL
+		////////////////////////////////////////////////////////////
+		
+		// duplicate ALDH1L1 channel
+		selectImage(image); // shift focus to original
+		run("Duplicate...", "title=ALDH1L1 duplicate channels=2");
+
+		run("Enhance Contrast...", "saturated=0.1"); // only for visualization purposes
+		
+		selectWindow("ALDH1L1"); // shift focus to original
+		saveAs("Png", datadir + condition + "/" + id + ".png");
+		close();
+
+		selectImage(image);
+		close();
+	
+	}
+
+	// save table with mappings
+	Table.save(datadir + "ID Mappings.csv")
+
+}
+```

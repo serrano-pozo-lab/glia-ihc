@@ -5,11 +5,35 @@
     <lastmod>2021-07-07T14:58:14-07:00</lastmod>
   </url>
   <url>
+    <loc>https://serranopozolab.org/glia-ihc/abeta-extraction.html</loc>
+    <lastmod>2021-07-10T14:35:33-07:00</lastmod>
+  </url>
+  <url>
+    <loc>https://serranopozolab.org/glia-ihc/aldh1l1-extraction.html</loc>
+    <lastmod>2021-07-10T14:36:01-07:00</lastmod>
+  </url>
+  <url>
+    <loc>https://serranopozolab.org/glia-ihc/iba1-extraction.html</loc>
+    <lastmod>2021-07-10T14:36:21-07:00</lastmod>
+  </url>
+  <url>
     <loc>https://serranopozolab.org/glia-ihc/</loc>
     <lastmod>2021-07-10T14:21:52-07:00</lastmod>
   </url>
   <url>
+    <loc>https://serranopozolab.org/glia-ihc/parse-rois.html</loc>
+    <lastmod>2021-07-10T14:42:50-07:00</lastmod>
+  </url>
+  <url>
+    <loc>https://serranopozolab.org/glia-ihc/phf1-extraction.html</loc>
+    <lastmod>2021-07-10T14:35:47-07:00</lastmod>
+  </url>
+  <url>
     <loc>https://serranopozolab.org/glia-ihc/reorder-channels.html</loc>
     <lastmod>2021-07-10T13:28:56-07:00</lastmod>
+  </url>
+  <url>
+    <loc>https://serranopozolab.org/glia-ihc/roi-segmentation.html</loc>
+    <lastmod>2021-07-10T14:58:43-07:00</lastmod>
   </url>
 </urlset>

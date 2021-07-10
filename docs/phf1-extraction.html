@@ -86,27 +86,30 @@ code span.wa { color: #5e5e5e; font-style: italic; } /* Warning */
 </style>
 
   <!--radix_placeholder_meta_tags-->
-  <title>IHC and ML to Phenotype AD Glia: 404 Error</title>
+  <title>IHC and ML to Phenotype AD Glia: Tangle Annotation</title>
 
+  <meta property="description" itemprop="description" content="This ImageJ script extracts the PHF1 and HuC/D channels from multi-channel TIFF images, merges both channels, and assigns each image a random alphanumeric code for blinded tangle annotation and classification as intraneuronal vs. extraneuronal."/>
 
   <link rel="icon" type="image/vnd.microsoft.icon" href="images/favicon.ico"/>
 
 
   <!--  https://developers.facebook.com/docs/sharing/webmasters#markup -->
-  <meta property="og:title" content="IHC and ML to Phenotype AD Glia: 404 Error"/>
+  <meta property="og:title" content="IHC and ML to Phenotype AD Glia: Tangle Annotation"/>
   <meta property="og:type" content="article"/>
+  <meta property="og:description" content="This ImageJ script extracts the PHF1 and HuC/D channels from multi-channel TIFF images, merges both channels, and assigns each image a random alphanumeric code for blinded tangle annotation and classification as intraneuronal vs. extraneuronal."/>
   <meta property="og:locale" content="en_US"/>
   <meta property="og:site_name" content="IHC and ML to Phenotype AD Glia"/>
 
   <!--  https://dev.twitter.com/cards/types/summary -->
   <meta property="twitter:card" content="summary"/>
-  <meta property="twitter:title" content="IHC and ML to Phenotype AD Glia: 404 Error"/>
+  <meta property="twitter:title" content="IHC and ML to Phenotype AD Glia: Tangle Annotation"/>
+  <meta property="twitter:description" content="This ImageJ script extracts the PHF1 and HuC/D channels from multi-channel TIFF images, merges both channels, and assigns each image a random alphanumeric code for blinded tangle annotation and classification as intraneuronal vs. extraneuronal."/>
 
   <!--/radix_placeholder_meta_tags-->
   <!--radix_placeholder_rmarkdown_metadata-->
 
   <script type="text/json" id="radix-rmarkdown-metadata">
-  {"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["title","output"]}},"value":[{"type":"character","attributes":{},"value":["404 Error"]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["distill::distill_article"]}},"value":[{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["toc"]}},"value":[{"type":"logical","attributes":{},"value":[true]}]}]}]}
+  {"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["title","description","output"]}},"value":[{"type":"character","attributes":{},"value":["Tangle Annotation"]},{"type":"character","attributes":{},"value":["This ImageJ script extracts the PHF1 and HuC/D channels from multi-channel TIFF images, merges both channels, and assigns each image a random alphanumeric code for blinded tangle annotation and classification as intraneuronal vs. extraneuronal.\n"]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["distill::distill_article"]}},"value":[{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["toc"]}},"value":[{"type":"logical","attributes":{},"value":[true]}]}]}]}
   </script>
   <!--/radix_placeholder_rmarkdown_metadata-->
   <!--radix_placeholder_navigation_in_header-->
@@ -2174,7 +2177,7 @@ code span.wa { color: #5e5e5e; font-style: italic; } /* Warning */
 <!--radix_placeholder_front_matter-->
 
 <script id="distill-front-matter" type="text/json">
-{"title":"404 Error","authors":[]}
+{"title":"Tangle Annotation","description":"This ImageJ script extracts the PHF1 and HuC/D channels from multi-channel TIFF images, merges both channels, and assigns each image a random alphanumeric code for blinded tangle annotation and classification as intraneuronal vs. extraneuronal.","authors":[]}
 </script>
 
 <!--/radix_placeholder_front_matter-->
@@ -2224,16 +2227,115 @@ ROI Segmentation
 <!--/radix_placeholder_site_before_body-->
 
 <div class="d-title">
-<h1>404 Error</h1>
+<h1>Tangle Annotation</h1>
 <!--radix_placeholder_categories-->
 <!--/radix_placeholder_categories-->
-
+<p><p>This ImageJ script extracts the PHF1 and HuC/D channels from multi-channel TIFF images, merges both channels, and assigns each image a random alphanumeric code for blinded tangle annotation and classification as intraneuronal vs. extraneuronal.</p></p>
 </div>
 
 
 <div class="d-article">
-<p>You may have reached this page in error. Please return to the home page, or open an issue on our <a href="https://github.com/ayushnoori/glia-ihc">GitHub repository</a>.</p>
-<div class="sourceCode" id="cb1"><pre class="sourceCode r distill-force-highlighting-css"><code class="sourceCode r"></code></pre></div>
+<p>This script is written in the ImageJ Macro Language (IJM).</p>
+<pre class="ijm IJM"><code>macro &quot;PHF1 Channel Extraction&quot; {
+
+    setBatchMode(true);
+
+    input = getDirectory(&quot;Choose input data folder.&quot;);
+    files = getFileList(input);
+    // Array.show(files);
+
+    dir = &quot;&lt;insert your directory here&gt;&quot;;
+    datadir = dir + &quot;Data/2 - Channel Extraction/Tangle/&quot;;
+
+
+    ////////////////////////////////////////////////////////////
+    /////  FUNCTION FOR RANDOM ID
+    ////////////////////////////////////////////////////////////
+    
+    function randomString(length, chars) {
+        result = &quot;&quot;;
+        for (i = 0; i &lt; length; i++) {
+            maxlen = lengthOf(chars)-1;
+            rand = round(random * maxlen);
+            result +=  substring(chars, rand, rand+1);
+        }
+        return result;
+    }
+    
+
+    ////////////////////////////////////////////////////////////
+    /////  ITERATE OVER IMAGES
+    ////////////////////////////////////////////////////////////
+    
+    for (f = 0; f &lt; files.length; f++) {
+
+        open(input + files[f]);
+        Roi.remove; // remove active selection, if any
+    
+        ////////////////////////////////////////////////////////////
+        /////  LOAD IMAGE + DEFINE MARKERS
+        ////////////////////////////////////////////////////////////
+        
+        image = getTitle(); // get crop title
+        selectImage(image); // shift focus to the selected crop
+        filename = substring(image, 0, indexOf(image, &quot;_Reordered.tif&quot;));
+        
+        splitname = split(filename, &quot;_&quot;);   
+        sample = splitname[0];
+        layer = splitname[1];
+        crop = splitname[2];
+        crop = substring(crop, 4);
+        
+        if (sample == &quot;1190&quot; || sample == &quot;1301&quot; || sample == &quot;1619&quot; || sample == &quot;2169&quot; || sample == &quot;2191&quot; || sample == &quot;2250&quot; || sample == &quot;2274&quot;) {
+            condition = &quot;CTRL&quot;;
+        } else {
+            condition = &quot;AD&quot;;
+        }
+        
+        print(filename);
+
+        ////////////////////////////////////////////////////////////
+        /////  RANDOMIZE CROP
+        ////////////////////////////////////////////////////////////
+
+        id = randomString(6, &quot;0123456789abcdefghijklmnopqrstuvwxyz&quot;);
+        // print(id);
+
+        Table.set(&quot;ID&quot;, f, id);
+        Table.set(&quot;Sample&quot;, f, sample);
+        Table.set(&quot;Layer&quot;, f, layer);
+        Table.set(&quot;Crop&quot;, f, crop);
+        Table.set(&quot;Condition&quot;, f, condition);
+        Table.set(&quot;File&quot;, f, filename);
+        Table.update();
+    
+        ////////////////////////////////////////////////////////////
+        /////  SAVE PHF1 AND HUC/D CHANNELS
+        ////////////////////////////////////////////////////////////
+        
+        // duplicate PHF1 channel and merge with HuC/D
+        selectImage(image); // shift focus to original
+        run(&quot;Duplicate...&quot;, &quot;title=PHF1 duplicate channels=17&quot;);
+        selectImage(image);
+        run(&quot;Duplicate...&quot;, &quot;title=DAPI duplicate channels=1&quot;);
+
+        // merge channels
+        run(&quot;Merge Channels...&quot;, &quot;c2=PHF1 c3=DAPI create&quot;);
+        
+        selectWindow(&quot;Composite&quot;); // shift focus to original
+        saveAs(&quot;Png&quot;, datadir + condition + &quot;/&quot; + id + &quot;.png&quot;);
+        close();
+
+        selectImage(image);
+        close();
+    
+    }
+
+    // save table with mappings
+    Table.save(datadir + &quot;ID Mappings.csv&quot;)
+
+}</code></pre>
+<div class="sourceCode" id="cb2"><pre class="sourceCode r distill-force-highlighting-css"><code class="sourceCode r"></code></pre></div>
 <!--radix_placeholder_article_footer-->
 <!--/radix_placeholder_article_footer-->
 </div>

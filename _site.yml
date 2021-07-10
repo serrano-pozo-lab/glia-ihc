@@ -13,8 +13,23 @@ navbar:
   right:
     - text: "Home"
       href: index.html
-    - text: "Manual Annotation"
+    - text: "ROI Annotation"
       menu:
         - text: "Reorder Channels"
-          href: reorder-channels.html
+          href: reorder-channels
+        - text: "---"
+        - text: "Astrocyte Annotation"
+          href: aldh1l1-extraction
+        - text: "Microglia Annotation"
+          href: iba1-extraction
+        - text: "Plaque Annotation"
+          href: abeta-extraction
+        - text: "Tangle Annotation"
+          href: phf1-extraction
+    - text: "ROI Segmentation"
+      menu:
+        - text: "Parse VIA ROIs"
+          href: parse-rois
+        - text: "ROI Segmentation"
+          href: roi-segmentation
 output: distill::distill_article
