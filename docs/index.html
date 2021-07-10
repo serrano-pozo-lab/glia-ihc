@@ -106,10 +106,12 @@ code span.wa { color: #5e5e5e; font-style: italic; } /* Warning */
   <meta property="twitter:description" content="We have developed a methodology of cyclic multiplex fluorescent immunohistochemistry on human postmortem brain sections followed by an image analysis and machine learning pipeline that enables a deep morphological characterization of astrocytes and microglia in the Alzheimer&#39;s brain."/>
 
   <!--/radix_placeholder_meta_tags-->
+  
+  <meta name="citation_reference" content="citation_title=PyTorch: An Imperative Style, High-Performance Deep Learning Library;citation_publication_date=2019;citation_publisher=Curran Associates, Inc.;citation_author=Adam Paszke;citation_author=Sam Gross;citation_author=Francisco Massa;citation_author=Adam Lerer;citation_author=James Bradbury;citation_author=Gregory Chanan;citation_author=Trevor Killeen;citation_author=Zeming Lin;citation_author=Natalia Gimelshein;citation_author=Luca Antiga;citation_author=Alban Desmaison;citation_author=Andreas Kopf;citation_author=Edward Yang;citation_author=Zachary DeVito;citation_author=Martin Raison;citation_author=Alykhan Tejani;citation_author=Sasank Chilamkurthy;citation_author=Benoit Steiner;citation_author=Lu Fang;citation_author=Junjie Bai;citation_author=Soumith Chintala"/>
   <!--radix_placeholder_rmarkdown_metadata-->
 
   <script type="text/json" id="radix-rmarkdown-metadata">
-  {"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["title","description","site","output"]}},"value":[{"type":"character","attributes":{},"value":["About"]},{"type":"character","attributes":{},"value":["We have developed a methodology of cyclic multiplex fluorescent immunohistochemistry on human postmortem brain sections followed by an image analysis and machine learning pipeline that enables a deep morphological characterization of astrocytes and microglia in the Alzheimer's brain.\n"]},{"type":"character","attributes":{},"value":["distill::distill_website"]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["distill::distill_article"]}},"value":[{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["toc"]}},"value":[{"type":"logical","attributes":{},"value":[true]}]}]}]}
+  {"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["title","description","site","bibliography","csl","output"]}},"value":[{"type":"character","attributes":{},"value":["About"]},{"type":"character","attributes":{},"value":["We have developed a methodology of cyclic multiplex fluorescent immunohistochemistry on human postmortem brain sections followed by an image analysis and machine learning pipeline that enables a deep morphological characterization of astrocytes and microglia in the Alzheimer's brain.\n"]},{"type":"character","attributes":{},"value":["distill::distill_website"]},{"type":"character","attributes":{},"value":["glia-ihc-bibliography.bib"]},{"type":"character","attributes":{},"value":["nature-communications.csl"]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["distill::distill_article"]}},"value":[{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["toc"]}},"value":[{"type":"logical","attributes":{},"value":[true]}]}]}]}
   </script>
   <!--/radix_placeholder_rmarkdown_metadata-->
   <!--radix_placeholder_navigation_in_header-->
@@ -1918,14 +1920,14 @@ code span.wa { color: #5e5e5e; font-style: italic; } /* Warning */
     --text-color:       rgba(255, 255, 255, 0.8);
     --text-size:        12px;
     --hover-color:      white;
-    --bkgd-color:       #0F2E3D;
+    --bkgd-color:       #227c9d;
   }
 
   .distill-site-footer {
     --text-color:       rgba(255, 255, 255, 0.8);
     --text-size:        15px;
     --hover-color:      white;
-    --bkgd-color:       #0F2E3D;
+    --bkgd-color:       #DB8A74;
   }
 
   /*-- Additional custom styles --*/
@@ -1952,14 +1954,15 @@ code span.wa { color: #5e5e5e; font-style: italic; } /* Warning */
 
   /* ARTICLE FORMATTING */
 
-  #updates-and-corrections {
+  /* #updates-and-corrections, #references {
     letter-spacing: 1px;
     text-transform: uppercase;
-  }
+  } */
 
   h1 {
-    margin-top: 2em;
+    margin-top: 2em !important;
     font-size: 36px !important;
+    color: #DB8A74 !important;
   }
 
   d-article h1:nth-child(2) {
@@ -1974,11 +1977,11 @@ code span.wa { color: #5e5e5e; font-style: italic; } /* Warning */
   /* BACKGROUND COLOR */
 
   body {
-    background-color: #F4F1DE;
+    background-color: #fdfffc;
   }
 
   .sourceCode {
-    background-color: #F4F1DE;
+    background-color: #fdfffc;
   }
 
   /* FLOATING TOC */
@@ -1990,7 +1993,7 @@ code span.wa { color: #5e5e5e; font-style: italic; } /* Warning */
   #TOC {
     position: fixed;
     z-index: 50;
-    background: #F4F1DE;     /* or   background: white; */
+    background: #fdfffc;     /* or   background: white; */
     padding: 10px;           /* optional */
     border-radius: 5px;      /* optional */
   }
@@ -2198,7 +2201,7 @@ Manual Annotation
 <a href="reorder-channels.html">Reorder Channels</a>
 </div>
 </div>
-<a href="https://github.com/mindds/glia-ihc" aria-label="Link to source">
+<a href="https://github.com/serrano-pozo-lab/glia-ihc" aria-label="Link to source">
 <i class="fab fa-github" aria-hidden="true"></i>
 </a>
 <a href="javascript:void(0);" class="nav-toggle">&#9776;</a>
@@ -2222,19 +2225,35 @@ Manual Annotation
 <nav class="l-text toc figcaption" id="TOC">
 <h3>Contents</h3>
 <ul>
-<li><a href="#setup">Setup</a></li>
+<li><a href="#dependencies">Dependencies</a></li>
 <li><a href="#documentation">Documentation</a></li>
 <li><a href="#code-availability">Code Availability</a></li>
 </ul>
 </nav>
 </div>
-<h1 id="setup">Setup</h1>
-<p>Install <a href="https://www.r-project.org/">R</a> to run our code.</p>
+<h1 id="dependencies">Dependencies</h1>
+<p>To run our code, please install the following dependencies:</p>
+<p><a href="https://www.r-project.org/" target="_blank" rel="noreferrer noopener"><img src="https://img.shields.io/badge/Language-R-276DC3?style=for-the-badge&amp;logo=r" alt="ayushnoori" align="center"/></a></p>
+<p><a href="https://imagej.net/" target="_blank" rel="noreferrer noopener"><img src="https://img.shields.io/static/v1?style=for-the-badge&amp;logo=imagej&amp;color=00D8E0&amp;logoColor=white&amp;label=Language&amp;message=ImageJ" alt="ayushnoori" align="center"/></a></p>
+<p><a href="https://www.python.org/" target="_blank" rel="noreferrer noopener"><img src="https://img.shields.io/badge/Language-Python-3776AB?style=for-the-badge&amp;logo=python" align="center"/></a></p>
+<p><a href="https://pytorch.org/" target="_blank" rel="noreferrer noopener"><img src="https://img.shields.io/badge/Library-PyTorch-EE4C2C?style=for-the-badge&amp;logo=pytorch" alt="ayushnoori" align="center"/></a></p>
+<p>Additional required libraries are specified in each script. Image segmentation was performed with the FIJI distribution of the open-source Java-based image analysis program ImageJ.<span class="citation" data-cites="schindelin_fiji_2012 rueden_imagej2_2017"><sup><a href="#ref-schindelin_fiji_2012" role="doc-biblioref">1</a>,<a href="#ref-rueden_imagej2_2017" role="doc-biblioref">2</a></sup></span> Convolutional neural networks (CNN) were constructed using the PyTorch open-source deep learning library in the Python programming language (version 3.8.5).<span class="citation" data-cites="paszke_pytorch_2019"><sup><a href="#ref-paszke_pytorch_2019" role="doc-biblioref">3</a></sup></span> Unless otherwise indicated, all other analyses were performed in the R programming language and statistical computing environment (version 4.1.0).</p>
 <h1 id="documentation">Documentation</h1>
-<p>To read our documented code, please visit <a href="https://serrano-pozo-lab.github.io/glia-ihc">serrano-pozo-lab.github.io/glia-ihc</a> or see below.</p>
+<p>To read our documented code, please visit <a href="https://serranopozolab.org/glia-ihc">serranopozolab.org/glia-ihc</a>.</p>
 <h1 id="code-availability">Code Availability</h1>
 <p>Our full codebase is available for download on <a href="https://github.com/serrano-pozo-lab/glia-ihc">GitHub</a>.</p>
 <div class="sourceCode" id="cb1"><pre class="sourceCode r distill-force-highlighting-css"><code class="sourceCode r"></code></pre></div>
+<div id="refs" class="references csl-bib-body" data-line-spacing="2" role="doc-bibliography">
+<div id="ref-schindelin_fiji_2012" class="csl-entry" role="doc-biblioentry">
+<div class="csl-left-margin">1. </div><div class="csl-right-inline">Schindelin, J. <em>et al.</em> Fiji: <span>An</span> <span>Open</span>-<span>Source</span> <span>Platform</span> for <span>Biological</span>-<span>Image</span> <span>Analysis</span>. <em>Nature Methods</em> <strong>9</strong>, 676–682 (2012).</div>
+</div>
+<div id="ref-rueden_imagej2_2017" class="csl-entry" role="doc-biblioentry">
+<div class="csl-left-margin">2. </div><div class="csl-right-inline">Rueden, C. T. <em>et al.</em> <span>ImageJ2</span>: <span>ImageJ</span> for the next generation of scientific image data. <em>BMC Bioinformatics</em> <strong>18</strong>, 529 (2017).</div>
+</div>
+<div id="ref-paszke_pytorch_2019" class="csl-entry" role="doc-biblioentry">
+<div class="csl-left-margin">3. </div><div class="csl-right-inline">Paszke, A. <em>et al.</em> <span>PyTorch</span>: <span>An</span> <span>Imperative</span> <span>Style</span>, <span>High</span>-<span>Performance</span> <span>Deep</span> <span>Learning</span> <span>Library</span>. in <em>Advances in <span>Neural</span> <span>Information</span> <span>Processing</span> <span>Systems</span> 32</em> (eds. Wallach, H. et al.) 8024–8035 (Curran Associates, Inc., 2019).</div>
+</div>
+</div>
 <!--radix_placeholder_article_footer-->
 <!--/radix_placeholder_article_footer-->
 </div>
@@ -2247,8 +2266,10 @@ Manual Annotation
 <!--/radix_placeholder_site_after_body-->
 <!--radix_placeholder_appendices-->
 <div class="appendix-bottom">
+<h3 id="references">References</h3>
+<div id="references-listing"></div>
 <h3 id="updates-and-corrections">Corrections</h3>
-<p>If you see mistakes or want to suggest changes, please <a href="https://github.com/ayushnoori/glia-ihc/issues/new">create an issue</a> on the source repository.</p>
+<p>If you see mistakes or want to suggest changes, please <a href="https://github.com/serrano-pozo-lab/glia-ihc/issues/new">create an issue</a> on the source repository.</p>
 </div>
 <!--/radix_placeholder_appendices-->
 <!--radix_placeholder_navigation_after_body-->
