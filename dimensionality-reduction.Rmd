@@ -2,6 +2,13 @@
 title: "Dimensionality Reduction"
 description: |
  This R script performs dimensionality reduction and identifies representative astrocytes/microglia in each phenotypic cluster.
+author:
+  - first_name: "Ayush"
+    last_name: "Noori"
+    url: https://www.github.com/ayushnoori
+    affiliation: Massachusetts General Hospital
+    affiliation_url: https://www.serranopozolab.com
+    orcid_id: 0000-0003-1420-1236
 output:
   distill::distill_article:
     toc: true

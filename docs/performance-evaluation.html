@@ -92,6 +92,7 @@ code span.wa { color: #5e5e5e; font-style: italic; } /* Warning */
 
   <link rel="icon" type="image/vnd.microsoft.icon" href="images/favicon.ico"/>
 
+  <meta name="article:author" content="Colin Magdamo"/>
 
   <!--  https://developers.facebook.com/docs/sharing/webmasters#markup -->
   <meta property="og:title" content="IHC and ML to Phenotype AD Glia: Performance Evaluation"/>
@@ -109,7 +110,7 @@ code span.wa { color: #5e5e5e; font-style: italic; } /* Warning */
   <!--radix_placeholder_rmarkdown_metadata-->
 
   <script type="text/json" id="radix-rmarkdown-metadata">
-  {"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["title","description","output"]}},"value":[{"type":"character","attributes":{},"value":["Performance Evaluation"]},{"type":"character","attributes":{},"value":["This R script evaluates GBM/CNN performance by bootstrapping across 500 iterations of the independent test set.\n"]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["distill::distill_article"]}},"value":[{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["toc"]}},"value":[{"type":"logical","attributes":{},"value":[true]}]}]}]}
+  {"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["title","description","author","output"]}},"value":[{"type":"character","attributes":{},"value":["Performance Evaluation"]},{"type":"character","attributes":{},"value":["This R script evaluates GBM/CNN performance by bootstrapping across 500 iterations of the independent test set.\n"]},{"type":"list","attributes":{},"value":[{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["first_name","last_name","affiliation","affiliation_url","orcid_id"]}},"value":[{"type":"character","attributes":{},"value":["Colin"]},{"type":"character","attributes":{},"value":["Magdamo"]},{"type":"character","attributes":{},"value":["Massachusetts General Hospital"]},{"type":"character","attributes":{},"value":["https://www.massgeneral.org/neurology/research/mind-data-science-lab"]},{"type":"character","attributes":{},"value":["0000-0001-8965-4630"]}]}]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["distill::distill_article"]}},"value":[{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["toc"]}},"value":[{"type":"logical","attributes":{},"value":[true]}]}]}]}
   </script>
   <!--/radix_placeholder_rmarkdown_metadata-->
   <!--radix_placeholder_navigation_in_header-->
@@ -1991,10 +1992,11 @@ code span.wa { color: #5e5e5e; font-style: italic; } /* Warning */
   #TOC {
     position: fixed;
     z-index: 50;
-    background: #fdfffc;     /* or   background: white; */
-    padding: 10px;           /* optional */
-    border-radius: 5px;      /* optional */
+    background: #fdfffc;     
+    padding: 10px;           
+    border-radius: 5px; 
   }
+
 
   /* Hide the ToC when resized to mobile or tablet:  480px, 768px, 900px */
   @media screen and (max-width: 1230px) {
@@ -2177,7 +2179,7 @@ code span.wa { color: #5e5e5e; font-style: italic; } /* Warning */
 <!--radix_placeholder_front_matter-->
 
 <script id="distill-front-matter" type="text/json">
-{"title":"Performance Evaluation","description":"This R script evaluates GBM/CNN performance by bootstrapping across 500 iterations of the independent test set.","authors":[]}
+{"title":"Performance Evaluation","description":"This R script evaluates GBM/CNN performance by bootstrapping across 500 iterations of the independent test set.","authors":[{"author":"Colin Magdamo","authorURL":"#","affiliation":"Massachusetts General Hospital","affiliationURL":"https://www.massgeneral.org/neurology/research/mind-data-science-lab","orcidID":"0000-0001-8965-4630"}]}
 </script>
 
 <!--/radix_placeholder_front_matter-->
@@ -2266,6 +2268,12 @@ Supervised ML
 <p><p>This R script evaluates GBM/CNN performance by bootstrapping across 500 iterations of the independent test set.</p></p>
 </div>
 
+<div class="d-byline">
+  
+  true
+  
+
+</div>
 
 <div class="d-article">
 <div class="d-contents d-contents-float">
@@ -2458,7 +2466,9 @@ Supervised ML
 <!--/radix_placeholder_appendices-->
 <!--radix_placeholder_navigation_after_body-->
 <div class="distill-site-nav distill-site-footer">
-<p>Website developed by <a href = "https://www.ayushnoori.com" target="_blank" rel="noopener noreferrer">Ayush Noori</a>. Code released under the GNU General Public License v3.0.</p>
+<div style="width: 60%; margin: 0 auto;">
+<p>Website developed by <a href = "https://www.ayushnoori.com" target="_blank" rel="noopener noreferrer">Ayush Noori</a> in the <a href = "https://www.serranopozolab.org" target="_blank" rel="noopener noreferrer">Serrano-Pozo Lab</a> at <a href = "https://www.massgeneral.org" target="_blank" rel="noopener noreferrer">Massachusetts General Hospital</a> and <a href = "https://hms.harvard.edu" target="_blank" rel="noopener noreferrer">Harvard Medical School</a>. Code released under the GNU General Public License v3.0.</p>
+</div>
 </div>
 <!--/radix_placeholder_navigation_after_body-->
 

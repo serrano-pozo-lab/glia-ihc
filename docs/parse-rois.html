@@ -92,6 +92,7 @@ code span.wa { color: #5e5e5e; font-style: italic; } /* Warning */
 
   <link rel="icon" type="image/vnd.microsoft.icon" href="images/favicon.ico"/>
 
+  <meta name="article:author" content="Ayush Noori"/>
 
   <!--  https://developers.facebook.com/docs/sharing/webmasters#markup -->
   <meta property="og:title" content="IHC and ML to Phenotype AD Glia: Parse VIA ROIs"/>
@@ -109,7 +110,7 @@ code span.wa { color: #5e5e5e; font-style: italic; } /* Warning */
   <!--radix_placeholder_rmarkdown_metadata-->
 
   <script type="text/json" id="radix-rmarkdown-metadata">
-  {"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["title","description","output"]}},"value":[{"type":"character","attributes":{},"value":["Parse VIA ROIs"]},{"type":"character","attributes":{},"value":["This R script parses manual astrocyte, microglia, plaque, and tangle annotations created using the VGG Image Annotator tool into an ImageJ-readable format.\n"]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["distill::distill_article"]}},"value":[{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["toc"]}},"value":[{"type":"logical","attributes":{},"value":[true]}]}]}]}
+  {"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["title","description","author","output"]}},"value":[{"type":"character","attributes":{},"value":["Parse VIA ROIs"]},{"type":"character","attributes":{},"value":["This R script parses manual astrocyte, microglia, plaque, and tangle annotations created using the VGG Image Annotator tool into an ImageJ-readable format.\n"]},{"type":"list","attributes":{},"value":[{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["first_name","last_name","url","affiliation","affiliation_url","orcid_id"]}},"value":[{"type":"character","attributes":{},"value":["Ayush"]},{"type":"character","attributes":{},"value":["Noori"]},{"type":"character","attributes":{},"value":["https://www.github.com/ayushnoori"]},{"type":"character","attributes":{},"value":["Massachusetts General Hospital"]},{"type":"character","attributes":{},"value":["https://www.serranopozolab.org"]},{"type":"character","attributes":{},"value":["0000-0003-1420-1236"]}]}]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["distill::distill_article"]}},"value":[{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["toc"]}},"value":[{"type":"logical","attributes":{},"value":[true]}]}]}]}
   </script>
   <!--/radix_placeholder_rmarkdown_metadata-->
   <!--radix_placeholder_navigation_in_header-->
@@ -1991,10 +1992,11 @@ code span.wa { color: #5e5e5e; font-style: italic; } /* Warning */
   #TOC {
     position: fixed;
     z-index: 50;
-    background: #fdfffc;     /* or   background: white; */
-    padding: 10px;           /* optional */
-    border-radius: 5px;      /* optional */
+    background: #fdfffc;     
+    padding: 10px;           
+    border-radius: 5px; 
   }
+
 
   /* Hide the ToC when resized to mobile or tablet:  480px, 768px, 900px */
   @media screen and (max-width: 1230px) {
@@ -2177,7 +2179,7 @@ code span.wa { color: #5e5e5e; font-style: italic; } /* Warning */
 <!--radix_placeholder_front_matter-->
 
 <script id="distill-front-matter" type="text/json">
-{"title":"Parse VIA ROIs","description":"This R script parses manual astrocyte, microglia, plaque, and tangle annotations created using the VGG Image Annotator tool into an ImageJ-readable format.","authors":[]}
+{"title":"Parse VIA ROIs","description":"This R script parses manual astrocyte, microglia, plaque, and tangle annotations created using the VGG Image Annotator tool into an ImageJ-readable format.","authors":[{"author":"Ayush Noori","authorURL":"https://www.github.com/ayushnoori","affiliation":"Massachusetts General Hospital","affiliationURL":"https://www.serranopozolab.org","orcidID":"0000-0003-1420-1236"}]}
 </script>
 
 <!--/radix_placeholder_front_matter-->
@@ -2266,6 +2268,12 @@ Supervised ML
 <p><p>This R script parses manual astrocyte, microglia, plaque, and tangle annotations created using the VGG Image Annotator tool into an ImageJ-readable format.</p></p>
 </div>
 
+<div class="d-byline">
+  
+  true
+  
+
+</div>
 
 <div class="d-article">
 <div class="d-contents d-contents-float">
@@ -2434,7 +2442,9 @@ Supervised ML
 <!--/radix_placeholder_appendices-->
 <!--radix_placeholder_navigation_after_body-->
 <div class="distill-site-nav distill-site-footer">
-<p>Website developed by <a href = "https://www.ayushnoori.com" target="_blank" rel="noopener noreferrer">Ayush Noori</a>. Code released under the GNU General Public License v3.0.</p>
+<div style="width: 60%; margin: 0 auto;">
+<p>Website developed by <a href = "https://www.ayushnoori.com" target="_blank" rel="noopener noreferrer">Ayush Noori</a> in the <a href = "https://www.serranopozolab.org" target="_blank" rel="noopener noreferrer">Serrano-Pozo Lab</a> at <a href = "https://www.massgeneral.org" target="_blank" rel="noopener noreferrer">Massachusetts General Hospital</a> and <a href = "https://hms.harvard.edu" target="_blank" rel="noopener noreferrer">Harvard Medical School</a>. Code released under the GNU General Public License v3.0.</p>
+</div>
 </div>
 <!--/radix_placeholder_navigation_after_body-->
 

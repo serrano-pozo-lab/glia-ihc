@@ -2,6 +2,13 @@
 title: "Partition by Condition"
 description: |
  This R script partitions the data into training, test, and validation sets using stratified random sampling by condition (i.e., CTRL vs. AD).
+author:
+  - first_name: "Ayush"
+    last_name: "Noori"
+    url: https://www.github.com/ayushnoori
+    affiliation: Massachusetts General Hospital
+    affiliation_url: https://www.serranopozolab.org
+    orcid_id: 0000-0003-1420-1236
 output:
   distill::distill_article:
     toc: true

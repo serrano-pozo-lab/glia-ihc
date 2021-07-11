@@ -2,6 +2,13 @@
 title: "Tangle Annotation"
 description: |
  This ImageJ script extracts the PHF1 and DAPI channels from multi-channel TIFF images, merges both channels, and assigns each image a random alphanumeric code for blinded tangle annotation and classification as intraneuronal vs. extraneuronal.
+author:
+  - first_name: "Ayush"
+    last_name: "Noori"
+    url: https://www.github.com/ayushnoori
+    affiliation: Massachusetts General Hospital
+    affiliation_url: https://www.serranopozolab.org
+    orcid_id: 0000-0003-1420-1236
 output:
   distill::distill_article:
     toc: true

@@ -2,6 +2,13 @@
 title: "Plot ROC Curves"
 description: |
  This R script plots the receiver operating characteristic (ROC) curves for the convolutional neural network models and calculates the area under the ROC curves (AUC).
+author:
+  - first_name: "Ayush"
+    last_name: "Noori"
+    url: https://www.github.com/ayushnoori
+    affiliation: Massachusetts General Hospital
+    affiliation_url: https://www.serranopozolab.org
+    orcid_id: 0000-0003-1420-1236
 output:
   distill::distill_article:
     toc: true

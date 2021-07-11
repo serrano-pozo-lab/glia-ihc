@@ -2,6 +2,13 @@
 title: "Gradient Boosting Machines by Condition"
 description: |
  This R script trains gradient boosting machines (GBM) models to perform the binary condition classification task (i.e., predict CTRL vs. AD).
+author:
+  - first_name: "Ayush"
+    last_name: "Noori"
+    url: https://www.github.com/ayushnoori
+    affiliation: Massachusetts General Hospital
+    affiliation_url: https://www.serranopozolab.org
+    orcid_id: 0000-0003-1420-1236
 output:
   distill::distill_article:
     toc: true

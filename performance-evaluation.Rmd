@@ -2,6 +2,12 @@
 title: "Performance Evaluation"
 description: |
  This R script evaluates GBM/CNN performance by bootstrapping across 500 iterations of the independent test set.
+author:
+  - first_name: "Colin"
+    last_name: "Magdamo"
+    affiliation: Massachusetts General Hospital
+    affiliation_url: https://www.massgeneral.org/neurology/research/mind-data-science-lab
+    orcid_id: 0000-0001-8965-4630
 output:
   distill::distill_article:
     toc: true

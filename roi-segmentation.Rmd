@@ -2,6 +2,13 @@
 title: "ROI Segmentation"
 description: |
  This ImageJ script segments the manually-defined ROIs from the multi-channel TIFFs.
+author:
+  - first_name: "Ayush"
+    last_name: "Noori"
+    url: https://www.github.com/ayushnoori
+    affiliation: Massachusetts General Hospital
+    affiliation_url: https://www.serranopozolab.org
+    orcid_id: 0000-0003-1420-1236
 output:
   distill::distill_article:
     toc: true

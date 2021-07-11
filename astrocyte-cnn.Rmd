@@ -3,7 +3,18 @@ title: "Convolutional Neural Network for Astrocyte Classification"
 description: |
  This Python script trains a convolutional neural network to predict diagnosis (i.e., CTRL vs. AD) at the single-astrocyte level using raw image features.
 bibliography: glia-ihc-bibliography.bib
-csl: nature-communications.csl
+author:
+  - first_name: "Ayush"
+    last_name: "Noori"
+    url: https://www.github.com/ayushnoori
+    affiliation: Massachusetts General Hospital
+    affiliation_url: https://www.serranopozolab.org
+    orcid_id: 0000-0003-1420-1236
+  - first_name: "Colin"
+    last_name: "Magdamo"
+    affiliation: Massachusetts General Hospital
+    affiliation_url: https://www.massgeneral.org/neurology/research/mind-data-science-lab
+    orcid_id: 0000-0001-8965-4630
 output:
   distill::distill_article:
     toc: true
@@ -66,11 +77,11 @@ def tocpu(x):
 
 The order of astrocyte markers (out of 17 markers in the original crops) prior to data transformation is specified below, used in the `select_channels()` function (zero-indexed).
 
-+------+---------+------+-------+------+------+-------+-------+------+
-| DAPI | ALDH1L1 | GFAP | YKL40 | VIM  | TSPO | EAAT1 | EAAT2 | GS   |
-+:====:+:=======:+:====:+:=====:+:====:+:====:+:=====:+:=====:+:====:+
-| 1    | 2       | 4    | 13    | 11   | 6    | 10    | 7     | 14   |
-+------+---------+------+-------+------+------+-------+-------+------+
++------+---------+------+-------+------+------+-------+-------+-------+
+| DAPI | ALDH1L1 | GFAP | YKL40 | VIM  | TSPO | EAAT1 | EAAT2 | GS    |
++:====:+:=======:+:====:+:=====:+:====:+:====:+:=====:+:=====:+:=====:+
+| 1    | 2       | 4    | 13    | 11   | 6    | 10    | 7     | 14    |
++------+---------+------+-------+------+------+-------+-------+-------+
 
 ```{python}
 

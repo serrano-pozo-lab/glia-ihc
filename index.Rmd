@@ -1,10 +1,9 @@
 ---
-title: "About"
+title: "Cyclic Multiplex Fluorescent Immunohistochemistry and Machine Learning Reveal Distinct States of Astrocytes and Microglia in Normal Aging and Alzheimer’s Disease"
 description: |
   We have developed a methodology of cyclic multiplex fluorescent immunohistochemistry on human postmortem brain sections followed by an image analysis and machine learning pipeline that enables a deep morphological characterization of astrocytes and microglia in the Alzheimer's brain.
 site: distill::distill_website
 bibliography: glia-ihc-bibliography.bib
-csl: nature-communications.csl
 output:
   distill::distill_article:
     toc: true
@@ -34,7 +33,7 @@ To run our code, please install the following dependencies:
 
 <a href="https://pytorch.org/" target="_blank" rel="noreferrer noopener"><img src="https://img.shields.io/badge/Library-PyTorch-EE4C2C?style=for-the-badge&amp;logo=pytorch" alt="ayushnoori" align="center"/></a>
 
-Additional required libraries are specified in each script. Image segmentation was performed with the FIJI distribution of the open-source Java-based image analysis program ImageJ [@schindelin_fiji_2012; @rueden_imagej2_2017]. Convolutional neural networks (CNN) were constructed using the PyTorch open-source deep learning library in the Python programming language (version 3.8.5) [@paszke_pytorch_2019]. Unless otherwise indicated, all other analyses were performed in the R programming language and statistical computing environment (version 4.1.0).
+Additional required libraries are specified in each script. Image segmentation was performed with the FIJI distribution [@schindelin_fiji_2012] of the open-source Java-based image analysis program ImageJ [@rueden_imagej2_2017]. Convolutional neural networks (CNN) were constructed using the PyTorch open-source deep learning library in the Python programming language (version 3.8.5) [@paszke_pytorch_2019]. Unless otherwise indicated, all other analyses were performed in the R programming language and statistical computing environment (version 4.1.0).
 
 # Workflow
 

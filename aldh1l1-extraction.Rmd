@@ -2,6 +2,13 @@
 title: "Astrocyte Channel Extraction"
 description: |
  This ImageJ script extracts the ALDH1L1 channel from multi-channel TIFF images and assigns each image a random alphanumeric code for blinded astrocyte annotation.
+author:
+  - first_name: "Ayush"
+    last_name: "Noori"
+    url: https://www.github.com/ayushnoori
+    affiliation: Massachusetts General Hospital
+    affiliation_url: https://www.serranopozolab.com
+    orcid_id: 0000-0003-1420-1236
 output:
   distill::distill_article:
     toc: true

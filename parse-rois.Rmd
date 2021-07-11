@@ -2,6 +2,13 @@
 title: "Parse VIA ROIs"
 description: |
  This R script parses manual astrocyte, microglia, plaque, and tangle annotations created using the VGG Image Annotator tool into an ImageJ-readable format.
+author:
+  - first_name: "Ayush"
+    last_name: "Noori"
+    url: https://www.github.com/ayushnoori
+    affiliation: Massachusetts General Hospital
+    affiliation_url: https://www.serranopozolab.org
+    orcid_id: 0000-0003-1420-1236
 output:
   distill::distill_article:
     toc: true
