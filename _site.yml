@@ -18,13 +18,13 @@ navbar:
         - text: "Reorder Channels"
           href: reorder-channels
         - text: "---"
-        - text: "Astrocyte Annotation"
+        - text: "Astrocyte Channel Extraction"
           href: aldh1l1-extraction
-        - text: "Microglia Annotation"
+        - text: "Microglia Channel Extraction"
           href: iba1-extraction
-        - text: "Plaque Annotation"
+        - text: "Plaque Channel Extraction"
           href: abeta-extraction
-        - text: "Tangle Annotation"
+        - text: "Tangle Channel Extraction"
           href: phf1-extraction
     - text: "ROI Segmentation"
       menu:
