@@ -748,7 +748,7 @@ def testNet(net, verbose = True):
 
 ```
 
-Apply the function on the independnet test set.
+Apply the function on the independent test set.
 
 ```{python}
 
