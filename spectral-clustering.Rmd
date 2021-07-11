@@ -7,8 +7,6 @@ output:
     toc: true
 ---
 
-knitr::opts_chunk\$set(eval = FALSE)
-
 ```{r setup, include = FALSE}
 knitr::opts_chunk$set(eval = FALSE)
 ```

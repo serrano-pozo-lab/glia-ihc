@@ -86,30 +86,30 @@ code span.wa { color: #5e5e5e; font-style: italic; } /* Warning */
 </style>
 
   <!--radix_placeholder_meta_tags-->
-  <title>IHC and ML to Phenotype AD Glia: ROI Segmentation</title>
+  <title>IHC and ML to Phenotype AD Glia: Performance Evaluation</title>
 
-  <meta property="description" itemprop="description" content="This ImageJ script segments the manually-defined ROIs from the multi-channel TIFFs."/>
+  <meta property="description" itemprop="description" content="This R script evaluates GBM/CNN performance by bootstrapping across 500 iterations of the independent test set."/>
 
   <link rel="icon" type="image/vnd.microsoft.icon" href="images/favicon.ico"/>
 
 
   <!--  https://developers.facebook.com/docs/sharing/webmasters#markup -->
-  <meta property="og:title" content="IHC and ML to Phenotype AD Glia: ROI Segmentation"/>
+  <meta property="og:title" content="IHC and ML to Phenotype AD Glia: Performance Evaluation"/>
   <meta property="og:type" content="article"/>
-  <meta property="og:description" content="This ImageJ script segments the manually-defined ROIs from the multi-channel TIFFs."/>
+  <meta property="og:description" content="This R script evaluates GBM/CNN performance by bootstrapping across 500 iterations of the independent test set."/>
   <meta property="og:locale" content="en_US"/>
   <meta property="og:site_name" content="IHC and ML to Phenotype AD Glia"/>
 
   <!--  https://dev.twitter.com/cards/types/summary -->
   <meta property="twitter:card" content="summary"/>
-  <meta property="twitter:title" content="IHC and ML to Phenotype AD Glia: ROI Segmentation"/>
-  <meta property="twitter:description" content="This ImageJ script segments the manually-defined ROIs from the multi-channel TIFFs."/>
+  <meta property="twitter:title" content="IHC and ML to Phenotype AD Glia: Performance Evaluation"/>
+  <meta property="twitter:description" content="This R script evaluates GBM/CNN performance by bootstrapping across 500 iterations of the independent test set."/>
 
   <!--/radix_placeholder_meta_tags-->
   <!--radix_placeholder_rmarkdown_metadata-->
 
   <script type="text/json" id="radix-rmarkdown-metadata">
-  {"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["title","description","output"]}},"value":[{"type":"character","attributes":{},"value":["ROI Segmentation"]},{"type":"character","attributes":{},"value":["This ImageJ script segments the manually-defined ROIs from the multi-channel TIFFs.\n"]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["distill::distill_article"]}},"value":[{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["toc"]}},"value":[{"type":"logical","attributes":{},"value":[true]}]}]}]}
+  {"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["title","description","output"]}},"value":[{"type":"character","attributes":{},"value":["Performance Evaluation"]},{"type":"character","attributes":{},"value":["This R script evaluates GBM/CNN performance by bootstrapping across 500 iterations of the independent test set.\n"]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["distill::distill_article"]}},"value":[{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["toc"]}},"value":[{"type":"logical","attributes":{},"value":[true]}]}]}]}
   </script>
   <!--/radix_placeholder_rmarkdown_metadata-->
   <!--radix_placeholder_navigation_in_header-->
@@ -2177,7 +2177,7 @@ code span.wa { color: #5e5e5e; font-style: italic; } /* Warning */
 <!--radix_placeholder_front_matter-->
 
 <script id="distill-front-matter" type="text/json">
-{"title":"ROI Segmentation","description":"This ImageJ script segments the manually-defined ROIs from the multi-channel TIFFs.","authors":[]}
+{"title":"Performance Evaluation","description":"This R script evaluates GBM/CNN performance by bootstrapping across 500 iterations of the independent test set.","authors":[]}
 </script>
 
 <!--/radix_placeholder_front_matter-->
@@ -2260,10 +2260,10 @@ Supervised ML
 <!--/radix_placeholder_site_before_body-->
 
 <div class="d-title">
-<h1>ROI Segmentation</h1>
+<h1>Performance Evaluation</h1>
 <!--radix_placeholder_categories-->
 <!--/radix_placeholder_categories-->
-<p><p>This ImageJ script segments the manually-defined ROIs from the multi-channel TIFFs.</p></p>
+<p><p>This R script evaluates GBM/CNN performance by bootstrapping across 500 iterations of the independent test set.</p></p>
 </div>
 
 
@@ -2272,412 +2272,174 @@ Supervised ML
 <nav class="l-text toc figcaption" id="TOC">
 <h3>Contents</h3>
 <ul>
-<li><a href="#setup">Setup</a></li>
-<li><a href="#retrieve-tiffs">Retrieve TIFFs</a></li>
-<li><a href="#background-subtraction">Background Subtraction</a></li>
-<li><a href="#define-metadata">Define Metadata</a></li>
-<li><a href="#create-rois">Create ROIs</a></li>
-<li><a href="#save-roi-coordinates">Save ROI Coordinates</a></li>
-<li><a href="#roi-segmentation">ROI Segmentation</a></li>
-<li><a href="#save-measurements">Save Measurements</a></li>
+<li><a href="#dependencies">Dependencies</a></li>
+<li><a href="#read-data">Read Data</a></li>
+<li><a href="#compute-model-performance">Compute Model Performance</a></li>
 </ul>
 </nav>
 </div>
-<h1 id="setup">Setup</h1>
-<p>This script is written in the ImageJ Macro Language (IJM). For readability, the single macro has been divided into several sections here. First, the requisite directories, cell-type groups, and measurements are defined.</p>
-<pre class="ijm IJM"><code>macro &quot;ROI Segmentation [m]&quot; {
+<h1 id="dependencies">Dependencies</h1>
+<p>Load requisite packages and define directories.</p>
+<div class="layout-chunk" data-layout="l-body">
+<div class="sourceCode">
+<pre class="sourceCode r"><code class="sourceCode r"><span class='kw'><a href='https://rdrr.io/r/base/library.html'>library</a></span><span class='op'>(</span><span class='va'><a href='https://r-datatable.com'>data.table</a></span><span class='op'>)</span>
+<span class='kw'><a href='https://rdrr.io/r/base/library.html'>library</a></span><span class='op'>(</span><span class='va'><a href='http://ipa-tys.github.io/ROCR/'>ROCR</a></span><span class='op'>)</span>
+<span class='kw'><a href='https://rdrr.io/r/base/library.html'>library</a></span><span class='op'>(</span><span class='va'><a href='http://expasy.org/tools/pROC/'>pROC</a></span><span class='op'>)</span>
+<span class='kw'><a href='https://rdrr.io/r/base/library.html'>library</a></span><span class='op'>(</span><span class='va'><a href='http://purrr.tidyverse.org'>purrr</a></span><span class='op'>)</span>
+<span class='kw'><a href='https://rdrr.io/r/base/library.html'>library</a></span><span class='op'>(</span><span class='va'><a href='https://glmnet.stanford.edu'>glmnet</a></span><span class='op'>)</span>
+<span class='kw'><a href='https://rdrr.io/r/base/library.html'>library</a></span><span class='op'>(</span><span class='va'><a href='https://dbplyr.tidyverse.org/'>dbplyr</a></span><span class='op'>)</span>
+<span class='kw'><a href='https://rdrr.io/r/base/library.html'>library</a></span><span class='op'>(</span><span class='va'>PRROC</span><span class='op'>)</span>
+<span class='kw'><a href='https://rdrr.io/r/base/library.html'>library</a></span><span class='op'>(</span><span class='va'><a href='https://hbiostat.org/R/rms/'>rms</a></span><span class='op'>)</span>
+</code></pre>
+</div>
+</div>
+<h1 id="read-data">Read Data</h1>
+<p>Read test set classification probabilities from gradient boosting machines (GBM) and convolutional neural network (CNN) model output. To comply with the bootstrapping function, datasets must have a column called <code>labels</code> (has true labels) and column called <code>predictions</code> (has predicted probability).</p>
+<div class="layout-chunk" data-layout="l-body">
+<div class="sourceCode">
+<pre class="sourceCode r"><code class="sourceCode r"><span class='co'># parse GBM data</span>
+<span class='va'>gbm</span> <span class='op'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/readRDS.html'>readRDS</a></span><span class='op'>(</span><span class='st'>'data/AD vs. CTRL GBM Results.rds'</span><span class='op'>)</span>
 
-    setBatchMode(true);
+<span class='co'># parse astrocyte GBM</span>
+<span class='va'>gbm_astrocyte</span> <span class='op'>&lt;-</span> <span class='va'>gbm</span><span class='op'>[[</span><span class='st'>'Astrocyte'</span><span class='op'>]</span><span class='op'>]</span><span class='op'>$</span><span class='va'>Scores</span><span class='op'>[</span>,<span class='fl'>2</span><span class='op'>:</span><span class='fl'>3</span><span class='op'>]</span>
+<span class='fu'><a href='https://Rdatatable.gitlab.io/data.table/reference/setattr.html'>setnames</a></span><span class='op'>(</span><span class='va'>gbm_astrocyte</span>,<span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='st'>'Condition'</span>,<span class='st'>'Alzheimer'</span><span class='op'>)</span>,<span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='st'>'labels'</span>,<span class='st'>'predictions'</span><span class='op'>)</span><span class='op'>)</span>
+<span class='va'>gbm_astrocyte</span><span class='op'>[</span>,<span class='va'>labels</span> <span class='op'>:=</span> <span class='fu'><a href='https://rdrr.io/r/base/integer.html'>as.integer</a></span><span class='op'>(</span><span class='va'>labels</span><span class='op'>)</span> <span class='op'>-</span> <span class='fl'>1</span><span class='op'>]</span>
 
-    // define paths
-    dir = &quot;&lt;insert your directory here&gt;&quot;;
-    dir2 = dir + &quot;Results/2 - ROI Annotations/&quot;;
-    outdir = dir + &quot;Data/3 - ROIs/&quot;;
+<span class='co'># parse microglia GBM</span>
+<span class='va'>gbm_microglia</span>  <span class='op'>&lt;-</span> <span class='va'>gbm</span><span class='op'>[[</span><span class='st'>'Microglia'</span><span class='op'>]</span><span class='op'>]</span><span class='op'>$</span><span class='va'>Scores</span><span class='op'>[</span>,<span class='fl'>2</span><span class='op'>:</span><span class='fl'>3</span><span class='op'>]</span>
+<span class='fu'><a href='https://Rdatatable.gitlab.io/data.table/reference/setattr.html'>setnames</a></span><span class='op'>(</span><span class='va'>gbm_microglia</span>,<span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='st'>'Condition'</span>,<span class='st'>'Alzheimer'</span><span class='op'>)</span>,<span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='st'>'labels'</span>,<span class='st'>'predictions'</span><span class='op'>)</span><span class='op'>)</span>
+<span class='va'>gbm_microglia</span><span class='op'>[</span>,<span class='va'>labels</span> <span class='op'>:=</span> <span class='fu'><a href='https://rdrr.io/r/base/integer.html'>as.integer</a></span><span class='op'>(</span><span class='va'>labels</span><span class='op'>)</span> <span class='op'>-</span> <span class='fl'>1</span><span class='op'>]</span>
 
-    getDateAndTime(year, month, dayOfWeek, dayOfMonth, hour, minute, second, msec);
-    MonthNames = newArray(&quot;Jan&quot;,&quot;Feb&quot;,&quot;Mar&quot;,&quot;Apr&quot;,&quot;May&quot;,&quot;Jun&quot;,&quot;Jul&quot;,&quot;Aug&quot;,&quot;Sep&quot;,&quot;Oct&quot;,&quot;Nov&quot;,&quot;Dec&quot;);
-    print(&quot;MULTIPLEX IHC ROI EXTRACTION&quot;);
-    print(&quot;DATE: &quot; + MonthNames[month] + &quot;. &quot; + dayOfMonth + &quot;, &quot; + year);
-    print(&quot;START TIME: &quot; + hour + &quot;:&quot; + minute + &quot;:&quot; + second);
-    
+<span class='co'># read astrocyte CNN</span>
+<span class='va'>cnn_astrocyte</span> <span class='op'>&lt;-</span> <span class='fu'><a href='https://Rdatatable.gitlab.io/data.table/reference/fread.html'>fread</a></span><span class='op'>(</span><span class='st'>'data/Astrocyte CNN TestSetResults.csv'</span><span class='op'>)</span><span class='op'>[</span>,<span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='st'>'TrueLabel'</span>,<span class='st'>'ProbabilityAD'</span><span class='op'>)</span><span class='op'>]</span>
+<span class='fu'><a href='https://Rdatatable.gitlab.io/data.table/reference/setattr.html'>setnames</a></span><span class='op'>(</span><span class='va'>cnn_astrocyte</span>,<span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='st'>'TrueLabel'</span>,<span class='st'>'ProbabilityAD'</span><span class='op'>)</span>,<span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='st'>'labels'</span>,<span class='st'>'predictions'</span><span class='op'>)</span><span class='op'>)</span>
+<span class='va'>cnn_astrocyte</span><span class='op'>[</span>,<span class='va'>labels</span> <span class='op'>:=</span> <span class='fu'><a href='https://Rdatatable.gitlab.io/data.table/reference/fifelse.html'>ifelse</a></span><span class='op'>(</span><span class='va'>labels</span> <span class='op'>==</span> <span class='fl'>1</span>,<span class='fl'>0</span>,<span class='fl'>1</span><span class='op'>)</span><span class='op'>]</span>
 
-    // define cell-type groups
-    celldirs = newArray(&quot;Astrocyte ROIs/&quot;, &quot;Microglia ROIs/&quot;, &quot;Vessel ROIs/&quot;, &quot;Plaque ROIs/&quot;, &quot;Tangle ROIs/&quot;);
-    Roi.setGroupNames(&quot;astrocyte,microglia,vessel,plaque,tangle&quot;);
+<span class='co'># read microglia CNN</span>
+<span class='va'>cnn_microglia</span> <span class='op'>&lt;-</span> <span class='fu'><a href='https://Rdatatable.gitlab.io/data.table/reference/fread.html'>fread</a></span><span class='op'>(</span><span class='st'>'data/Microglia CNN TestSetResults.csv'</span><span class='op'>)</span><span class='op'>[</span>,<span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='st'>'TrueLabel'</span>,<span class='st'>'ProbabilityAD'</span><span class='op'>)</span><span class='op'>]</span>
+<span class='fu'><a href='https://Rdatatable.gitlab.io/data.table/reference/setattr.html'>setnames</a></span><span class='op'>(</span><span class='va'>cnn_microglia</span>,<span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='st'>'TrueLabel'</span>,<span class='st'>'ProbabilityAD'</span><span class='op'>)</span>,<span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='st'>'labels'</span>,<span class='st'>'predictions'</span><span class='op'>)</span><span class='op'>)</span>
+<span class='va'>cnn_microglia</span><span class='op'>[</span>,<span class='va'>labels</span> <span class='op'>:=</span> <span class='fu'><a href='https://Rdatatable.gitlab.io/data.table/reference/fifelse.html'>ifelse</a></span><span class='op'>(</span><span class='va'>labels</span> <span class='op'>==</span> <span class='fl'>1</span>,<span class='fl'>0</span>,<span class='fl'>1</span><span class='op'>)</span><span class='op'>]</span>
 
-    // get input directory for final TIFF crops
-    input = getDirectory(&quot;Choose input data folder with full TIFF crops.&quot;);
-    // input = dir + &quot;Data/1 - Test Crops/&quot;;
-    files = getFileList(input);
-    // Array.show(files);
+<span class='co'># create named list</span>
+<span class='va'>all_experiments</span> <span class='op'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span><span class='op'>(</span>gbm_astrocyte <span class='op'>=</span> <span class='va'>gbm_astrocyte</span>, gbm_microglia <span class='op'>=</span> <span class='va'>gbm_microglia</span>,
+                        cnn_astrocyte <span class='op'>=</span> <span class='va'>cnn_astrocyte</span>,cnn_microglia <span class='op'>=</span> <span class='va'>cnn_microglia</span><span class='op'>)</span>
+</code></pre>
+</div>
+</div>
+<h1 id="compute-model-performance">Compute Model Performance</h1>
+<p>Function to compute model performance and calculate 95% confidence intervals by boostrapping across 500 iterations of the independent test set.</p>
+<div class="layout-chunk" data-layout="l-body">
+<div class="sourceCode">
+<pre class="sourceCode r"><code class="sourceCode r"><span class='va'>compute_model_performance</span> <span class='op'>&lt;-</span> <span class='kw'>function</span><span class='op'>(</span><span class='va'>model_name</span>,<span class='va'>model_preds</span>,<span class='va'>metrics</span> <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='st'>'acc'</span>, <span class='st'>'ppv'</span>, <span class='st'>'npv'</span>, <span class='st'>'sens'</span>, <span class='st'>'spec'</span>, <span class='st'>'f'</span>,<span class='st'>'auc'</span>,<span class='st'>'aucpr'</span><span class='op'>)</span>,<span class='va'>threshold_criteria</span> <span class='op'>=</span> <span class='st'>'max_accuracy'</span>,<span class='va'>marginal_thresholds</span> <span class='op'>=</span> <span class='cn'>NULL</span><span class='op'>)</span><span class='op'>{</span>
 
-    // set measurements to be applied on ROIs
-    run(&quot;Set Measurements...&quot;, &quot;area mean standard modal min centroid center perimeter bounding shape feret&#39;s integrated median skewness area_fraction stack display redirect=None decimal=3&quot;); 
-    
-    // open list of TIFF files which have annotations
-    run(&quot;Table... &quot;, &quot;open=[&quot; + dir2 + &quot;Annotated TIFFs.txt]&quot;);
-    Table.rename(&quot;Annotated TIFFs.txt&quot;, &quot;TIFFs&quot;);</code></pre>
-<h1 id="retrieve-tiffs">Retrieve TIFFs</h1>
-<p>Next, the list of annotated TIFF files is retrieved and iterated over.</p>
-<pre class="ijm IJM"><code>    ////////////////////////////////////////////////////////////
-    /////  GET TIFF LIST AND OPEN FILES
-    ////////////////////////////////////////////////////////////
+  <span class='co'># prediction object ROCR expects; if it is NOT ROCR class prediction then make model_preds one</span>
+  <span class='kw'>if</span><span class='op'>(</span><span class='op'>!</span><span class='st'>'prediction'</span> <span class='op'>%in%</span> <span class='fu'><a href='https://rdrr.io/r/base/class.html'>class</a></span><span class='op'>(</span><span class='va'>model_preds</span><span class='op'>)</span><span class='op'>)</span> <span class='op'>{</span>
+    <span class='va'>ROCR_prediction</span> <span class='op'>&lt;-</span> <span class='fu'><a href='http://ipa-tys.github.io/ROCR/reference/prediction.html'>prediction</a></span><span class='op'>(</span><span class='va'>model_preds</span><span class='op'>$</span><span class='va'>predictions</span>,<span class='va'>model_preds</span><span class='op'>$</span><span class='va'>labels</span><span class='op'>)</span>
+  <span class='op'>}</span> <span class='kw'>else</span> <span class='op'>{</span><span class='va'>ROCR_prediction</span> <span class='op'>&lt;-</span> <span class='va'>model_preds</span><span class='op'>}</span>
 
-    tiffs = Table.getColumn(&quot;Annotated TIFFs&quot;, &quot;TIFFs&quot;);
-    selectWindow(&quot;TIFFs&quot;);
-    run(&quot;Close&quot;);
-    // Array.show(tiffs);
+  <span class='co'># first, check if there are any threshold dependent metrics</span>
+  <span class='kw'>if</span><span class='op'>(</span><span class='fu'><a href='https://rdrr.io/r/base/any.html'>any</a></span><span class='op'>(</span><span class='op'>!</span><span class='va'>metrics</span> <span class='op'>%in%</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='st'>'auc'</span>,<span class='st'>'aucpr'</span><span class='op'>)</span><span class='op'>)</span><span class='op'>)</span><span class='op'>{</span>
+    <span class='va'>acc</span> <span class='op'>&lt;-</span> <span class='fu'><a href='http://ipa-tys.github.io/ROCR/reference/performance.html'>performance</a></span><span class='op'>(</span><span class='va'>ROCR_prediction</span>,<span class='st'>'acc'</span><span class='op'>)</span>
+    <span class='va'>acc</span> <span class='op'>&lt;-</span> <span class='fu'><a href='https://Rdatatable.gitlab.io/data.table/reference/data.table.html'>data.table</a></span><span class='op'>(</span>cutoffs <span class='op'>=</span> <span class='va'>acc</span><span class='op'>@</span><span class='va'>x.values</span><span class='op'>[[</span><span class='fl'>1</span><span class='op'>]</span><span class='op'>]</span>,accuracy <span class='op'>=</span> <span class='va'>acc</span><span class='op'>@</span><span class='va'>y.values</span><span class='op'>[[</span><span class='fl'>1</span><span class='op'>]</span><span class='op'>]</span><span class='op'>)</span>
+    <span class='kw'>if</span><span class='op'>(</span><span class='va'>threshold_criteria</span> <span class='op'>==</span> <span class='st'>'max_accuracy'</span><span class='op'>)</span><span class='op'>{</span>
+      <span class='co'># pick cutoff that yields max accuracy</span>
+      <span class='va'>threshold</span> <span class='op'>&lt;-</span> <span class='va'>acc</span><span class='op'>[</span><span class='va'>acc</span><span class='op'>[</span>,<span class='va'>.I</span><span class='op'>[</span><span class='fu'><a href='https://rdrr.io/r/base/which.min.html'>which.max</a></span><span class='op'>(</span><span class='va'>accuracy</span><span class='op'>)</span><span class='op'>]</span><span class='op'>]</span>,<span class='va'>cutoffs</span><span class='op'>]</span>
+    <span class='op'>}</span>
+    <span class='co'># must input all_experiments_performance_metrics_cast if using this threshold_criteria</span>
+    <span class='kw'>if</span><span class='op'>(</span><span class='va'>threshold_criteria</span> <span class='op'>==</span> <span class='st'>'from_marginal'</span><span class='op'>)</span><span class='op'>{</span>
+      <span class='co'># merge back threshold from marginal model</span>
+      <span class='va'>colnames_strip</span> <span class='op'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/pkg/openxlsx/man/names.html'>names</a></span><span class='op'>(</span><span class='va'>stratifed_result_indices</span><span class='op'>)</span>
+      <span class='va'>from_marginal_model</span> <span class='op'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/grep.html'>gsub</a></span><span class='op'>(</span><span class='fu'><a href='https://rdrr.io/r/base/paste.html'>paste</a></span><span class='op'>(</span><span class='va'>colnames_strip</span>,collapse <span class='op'>=</span> <span class='st'>"|"</span><span class='op'>)</span>,<span class='st'>""</span>,<span class='va'>model_name</span><span class='op'>)</span>
+      <span class='va'>from_marginal_model</span> <span class='op'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/grep.html'>gsub</a></span><span class='op'>(</span><span class='st'>'_\\b'</span>,<span class='st'>""</span>,<span class='va'>from_marginal_model</span><span class='op'>)</span>
+      <span class='va'>threshold</span> <span class='op'>&lt;-</span> <span class='va'>marginal_thresholds</span><span class='op'>[</span><span class='va'>model_name</span> <span class='op'>==</span> <span class='va'>from_marginal_model</span>,<span class='va'>Threshold</span><span class='op'>]</span>
+      <span class='co'># need to get threshold closest to this ON the data in strata</span>
+      <span class='va'>threshold</span> <span class='op'>&lt;-</span> <span class='va'>acc</span><span class='op'>[</span><span class='va'>cutoffs</span> <span class='op'>&lt;=</span> <span class='va'>threshold</span>,<span class='op'>]</span><span class='op'>[</span><span class='fu'><a href='https://Rdatatable.gitlab.io/data.table/reference/setorder.html'>order</a></span><span class='op'>(</span><span class='op'>-</span><span class='va'>cutoffs</span><span class='op'>)</span><span class='op'>]</span><span class='op'>[</span><span class='fl'>1</span>,<span class='va'>cutoffs</span><span class='op'>]</span> <span class='co'># get threshold within acc object immediately BEFORE this threshold or equal to if its</span>
+    <span class='op'>}</span>
+  <span class='op'>}</span>
 
-    for (f = 0; f &lt; tiffs.length; f++) {
+  <span class='co'># build DT for results from threshold independent metrics</span>
+  <span class='va'>ROCR_results_no_threshold</span> <span class='op'>&lt;-</span> <span class='fu'><a href='https://purrr.tidyverse.org/reference/map.html'>map_dfr</a></span><span class='op'>(</span><span class='va'>metrics</span><span class='op'>[</span><span class='va'>metrics</span> <span class='op'>%in%</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='st'>'auc'</span>,<span class='st'>'aucpr'</span><span class='op'>)</span><span class='op'>]</span>,<span class='op'>~</span><span class='fu'><a href='https://Rdatatable.gitlab.io/data.table/reference/data.table.html'>data.table</a></span><span class='op'>(</span>Measure <span class='op'>=</span> <span class='va'>.x</span>,
+                                                                                          Value <span class='op'>=</span> <span class='fu'><a href='http://ipa-tys.github.io/ROCR/reference/performance.html'>performance</a></span><span class='op'>(</span><span class='va'>ROCR_prediction</span>,<span class='va'>.x</span><span class='op'>)</span><span class='op'>@</span><span class='va'>y.values</span><span class='op'>[[</span><span class='fl'>1</span><span class='op'>]</span><span class='op'>]</span>,
+                                                                                          model_name <span class='op'>=</span> <span class='va'>model_name</span>,
+                                                                                          threshold_criteria <span class='op'>=</span> <span class='va'>threshold_criteria</span>,
+                                                                                          threshold <span class='op'>=</span> <span class='st'>'Measure Independent of Threshold'</span><span class='op'>)</span><span class='op'>)</span>
+  
+  <span class='co'># threshold dependent methods</span>
+  <span class='co'># index y value where x value equal to threshold selected from threshold criteria</span>
+  <span class='va'>ROCR_results_threshold</span> <span class='op'>&lt;-</span> <span class='fu'><a href='https://purrr.tidyverse.org/reference/map.html'>map_dfr</a></span><span class='op'>(</span><span class='va'>metrics</span><span class='op'>[</span><span class='op'>!</span><span class='va'>metrics</span> <span class='op'>%in%</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='st'>'auc'</span>,<span class='st'>'aucpr'</span><span class='op'>)</span><span class='op'>]</span>,<span class='op'>~</span><span class='fu'><a href='https://Rdatatable.gitlab.io/data.table/reference/data.table.html'>data.table</a></span><span class='op'>(</span>Measure <span class='op'>=</span> <span class='va'>.x</span>,
+                                                                                        Value <span class='op'>=</span> <span class='fu'><a href='http://ipa-tys.github.io/ROCR/reference/performance.html'>performance</a></span><span class='op'>(</span><span class='va'>ROCR_prediction</span>,<span class='va'>.x</span><span class='op'>)</span><span class='op'>@</span><span class='va'>y.values</span><span class='op'>[[</span><span class='fl'>1</span><span class='op'>]</span><span class='op'>]</span><span class='op'>[</span><span class='fu'><a href='https://rdrr.io/r/base/which.html'>which</a></span><span class='op'>(</span><span class='fu'><a href='http://ipa-tys.github.io/ROCR/reference/performance.html'>performance</a></span><span class='op'>(</span><span class='va'>ROCR_prediction</span>,<span class='va'>.x</span><span class='op'>)</span><span class='op'>@</span><span class='va'>x.values</span><span class='op'>[[</span><span class='fl'>1</span><span class='op'>]</span><span class='op'>]</span> <span class='op'>==</span> <span class='va'>threshold</span><span class='op'>)</span><span class='op'>]</span>,
+                                                                                        model_name <span class='op'>=</span> <span class='va'>model_name</span>,
+                                                                                        threshold_criteria <span class='op'>=</span> <span class='va'>threshold_criteria</span>,
+                                                                                        threshold <span class='op'>=</span> <span class='va'>threshold</span>
+  <span class='op'>)</span><span class='op'>)</span>
 
-        fname = tiffs[f];
-        print(&quot;&quot;); // add new line
-        print(&quot;-------- &quot; + f+1 + &quot;/&quot; + tiffs.length + &quot;: &quot; + fname + &quot; --------&quot;);
-        
-        open(input + fname + &quot;_Reordered.tif&quot;);
-        Roi.remove; // remove active selection, if any
+  <span class='co'># add CIs, sample 300 times w replacement and take .025 slices each end</span>
+  <span class='fu'><a href='https://rdrr.io/r/base/Random.html'>set.seed</a></span><span class='op'>(</span><span class='fl'>5281995</span><span class='op'>)</span>
+  <span class='va'>seeds</span> <span class='op'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/sample.html'>sample.int</a></span><span class='op'>(</span><span class='fl'>10000000</span>,<span class='fl'>500</span><span class='op'>)</span>
 
-        image = getTitle(); // get crop title
-        selectImage(image); // shift focus to the selected crop
+  <span class='co'># for 1:500, compute CI for each measure</span>
+  <span class='co'># takes a replicate index and data to resample, resamples w replacement, computes all specified measures for each replicate</span>
+  <span class='va'>boot_CIs</span> <span class='op'>&lt;-</span> <span class='kw'>function</span><span class='op'>(</span><span class='va'>i</span>,<span class='va'>data_to_resample</span><span class='op'>)</span><span class='op'>{</span>
+    <span class='co'># new seed for each replicate</span>
+    <span class='fu'><a href='https://rdrr.io/r/base/Random.html'>set.seed</a></span><span class='op'>(</span>seed <span class='op'>=</span> <span class='va'>seeds</span><span class='op'>[[</span><span class='va'>i</span><span class='op'>]</span><span class='op'>]</span><span class='op'>)</span>;
+    <span class='co'># extract just preds and labels from ROCR object</span>
+    <span class='va'>data</span> <span class='op'>&lt;-</span> <span class='fu'><a href='https://Rdatatable.gitlab.io/data.table/reference/data.table.html'>data.table</a></span><span class='op'>(</span>predictions <span class='op'>=</span> <span class='va'>data_to_resample</span><span class='op'>@</span><span class='va'>predictions</span><span class='op'>[[</span><span class='fl'>1</span><span class='op'>]</span><span class='op'>]</span>,labels <span class='op'>=</span> <span class='va'>data_to_resample</span><span class='op'>@</span><span class='va'>labels</span><span class='op'>[[</span><span class='fl'>1</span><span class='op'>]</span><span class='op'>]</span><span class='op'>)</span>
+    <span class='co'># resample w replacement</span>
+    <span class='va'>data</span> <span class='op'>&lt;-</span> <span class='va'>data</span><span class='op'>[</span><span class='fu'><a href='https://rdrr.io/r/base/sample.html'>sample</a></span><span class='op'>(</span><span class='fl'>1</span><span class='op'>:</span><span class='fu'><a href='https://rdrr.io/r/base/nrow.html'>nrow</a></span><span class='op'>(</span><span class='va'>data</span><span class='op'>)</span>,replace <span class='op'>=</span> <span class='cn'>T</span><span class='op'>)</span>,<span class='op'>]</span>
+    <span class='co'># make a new prediction object</span>
+    <span class='va'>ROCR_prediction</span> <span class='op'>&lt;-</span> <span class='fu'><a href='http://ipa-tys.github.io/ROCR/reference/prediction.html'>prediction</a></span><span class='op'>(</span><span class='va'>data</span><span class='op'>$</span><span class='va'>predictions</span>,<span class='va'>data</span><span class='op'>$</span><span class='va'>labels</span><span class='op'>)</span>
 
-        // normalize with rolling ball filter
-        run(&quot;Subtract Background...&quot;, &quot;rolling=200 stack&quot;);</code></pre>
-<h1 id="background-subtraction">Background Subtraction</h1>
-<p>For each TIFF file, rolling ball background subtraction is applied with a radius of 200 pixels.</p>
-<pre class="ijm IJM"><code>        // perform background subtraction with rolling ball filter
-        run(&quot;Subtract Background...&quot;, &quot;rolling=200 stack&quot;);</code></pre>
-<h1 id="define-metadata">Define Metadata</h1>
-<p>The condition of each sample (i.e., CTRL or AD) is defined, and the pixel-to-micron resolution is extracted from the metadata.</p>
-<pre class="ijm IJM"><code>        ////////////////////////////////////////////////////////////
-        /////  CLASSIFY SAMPLE CONDITION
-        ////////////////////////////////////////////////////////////
-        
-        sample = split(fname, &quot;_&quot;); // sample condition classified again
-        sample = sample[0];
-        
-        if (sample == &quot;1190&quot; || sample == &quot;1301&quot; || sample == &quot;1619&quot; || sample == &quot;2169&quot; || sample == &quot;2191&quot; || sample == &quot;2250&quot; || sample == &quot;2274&quot;) {
-            condition = &quot;CTRL&quot;;
-        } else {
-            condition = &quot;AD&quot;;
-        }
-        
-        // create output directory
-        output = outdir + condition + &quot;/&quot; + fname;
-        File.makeDirectory(output);
+    <span class='kw'>if</span><span class='op'>(</span><span class='fu'><a href='https://rdrr.io/r/base/any.html'>any</a></span><span class='op'>(</span><span class='op'>!</span><span class='va'>metrics</span> <span class='op'>%in%</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='st'>'auc'</span>,<span class='st'>'aucpr'</span><span class='op'>)</span><span class='op'>)</span><span class='op'>)</span><span class='op'>{</span>
+      <span class='va'>acc</span> <span class='op'>&lt;-</span> <span class='fu'><a href='http://ipa-tys.github.io/ROCR/reference/performance.html'>performance</a></span><span class='op'>(</span><span class='va'>ROCR_prediction</span>,<span class='st'>'acc'</span><span class='op'>)</span>
+      <span class='va'>acc</span> <span class='op'>&lt;-</span> <span class='fu'><a href='https://Rdatatable.gitlab.io/data.table/reference/data.table.html'>data.table</a></span><span class='op'>(</span>cutoffs <span class='op'>=</span> <span class='va'>acc</span><span class='op'>@</span><span class='va'>x.values</span><span class='op'>[[</span><span class='fl'>1</span><span class='op'>]</span><span class='op'>]</span>,accuracy <span class='op'>=</span> <span class='va'>acc</span><span class='op'>@</span><span class='va'>y.values</span><span class='op'>[[</span><span class='fl'>1</span><span class='op'>]</span><span class='op'>]</span><span class='op'>)</span>
+      <span class='kw'>if</span><span class='op'>(</span><span class='va'>threshold_criteria</span> <span class='op'>==</span> <span class='st'>'max_accuracy'</span><span class='op'>)</span><span class='op'>{</span>
+        <span class='co'># pick cutoff that yields max accuracy</span>
+        <span class='va'>threshold</span> <span class='op'>&lt;-</span> <span class='va'>acc</span><span class='op'>[</span><span class='va'>acc</span><span class='op'>[</span>,<span class='va'>.I</span><span class='op'>[</span><span class='fu'><a href='https://rdrr.io/r/base/which.min.html'>which.max</a></span><span class='op'>(</span><span class='va'>accuracy</span><span class='op'>)</span><span class='op'>]</span><span class='op'>]</span>,<span class='va'>cutoffs</span><span class='op'>]</span>
+      <span class='op'>}</span>
+    <span class='op'>}</span>
 
-        // print condition
-        print(&quot;Condition: &quot; + condition);
+    <span class='va'>ROCR_results_no_threshold</span> <span class='op'>&lt;-</span> <span class='fu'><a href='https://purrr.tidyverse.org/reference/map.html'>map_dfr</a></span><span class='op'>(</span><span class='va'>metrics</span><span class='op'>[</span><span class='va'>metrics</span> <span class='op'>%in%</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='st'>'auc'</span>,<span class='st'>'aucpr'</span><span class='op'>)</span><span class='op'>]</span>,<span class='op'>~</span><span class='fu'><a href='https://Rdatatable.gitlab.io/data.table/reference/data.table.html'>data.table</a></span><span class='op'>(</span>Measure <span class='op'>=</span> <span class='va'>.x</span>,
+                                                                                            Value <span class='op'>=</span> <span class='fu'><a href='http://ipa-tys.github.io/ROCR/reference/performance.html'>performance</a></span><span class='op'>(</span><span class='va'>ROCR_prediction</span>,<span class='va'>.x</span><span class='op'>)</span><span class='op'>@</span><span class='va'>y.values</span><span class='op'>[[</span><span class='fl'>1</span><span class='op'>]</span><span class='op'>]</span>,
+                                                                                            model_name <span class='op'>=</span> <span class='va'>model_name</span>,
+                                                                                            threshold_criteria <span class='op'>=</span> <span class='va'>threshold_criteria</span>,
+                                                                                            threshold <span class='op'>=</span> <span class='st'>'Measure Independent of Threshold'</span>,
+                                                                                            replicate <span class='op'>=</span> <span class='va'>i</span><span class='op'>)</span><span class='op'>)</span>
+    <span class='co'># threshold dependent methods, index y vals where x val equal to threshold selected from threshold criteria</span>
+    <span class='va'>ROCR_results_threshold</span> <span class='op'>&lt;-</span> <span class='fu'><a href='https://purrr.tidyverse.org/reference/map.html'>map_dfr</a></span><span class='op'>(</span><span class='va'>metrics</span><span class='op'>[</span><span class='op'>!</span><span class='va'>metrics</span> <span class='op'>%in%</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='st'>'auc'</span>,<span class='st'>'aucpr'</span><span class='op'>)</span><span class='op'>]</span>,<span class='op'>~</span><span class='fu'><a href='https://Rdatatable.gitlab.io/data.table/reference/data.table.html'>data.table</a></span><span class='op'>(</span>Measure <span class='op'>=</span> <span class='va'>.x</span>,
+                                                                                          Value <span class='op'>=</span> <span class='fu'><a href='http://ipa-tys.github.io/ROCR/reference/performance.html'>performance</a></span><span class='op'>(</span><span class='va'>ROCR_prediction</span>,<span class='va'>.x</span><span class='op'>)</span><span class='op'>@</span><span class='va'>y.values</span><span class='op'>[[</span><span class='fl'>1</span><span class='op'>]</span><span class='op'>]</span><span class='op'>[</span><span class='fu'><a href='https://rdrr.io/r/base/which.html'>which</a></span><span class='op'>(</span><span class='fu'><a href='http://ipa-tys.github.io/ROCR/reference/performance.html'>performance</a></span><span class='op'>(</span><span class='va'>ROCR_prediction</span>,<span class='va'>.x</span><span class='op'>)</span><span class='op'>@</span><span class='va'>x.values</span><span class='op'>[[</span><span class='fl'>1</span><span class='op'>]</span><span class='op'>]</span> <span class='op'>==</span> <span class='va'>threshold</span><span class='op'>)</span><span class='op'>]</span>,
+                                                                                          model_name <span class='op'>=</span> <span class='va'>model_name</span>,
+                                                                                          threshold_criteria <span class='op'>=</span> <span class='va'>threshold_criteria</span>,
+                                                                                          threshold <span class='op'>=</span> <span class='va'>threshold</span>,
+                                                                                          replicate <span class='op'>=</span> <span class='va'>i</span><span class='op'>)</span><span class='op'>)</span>
 
-        // extract pixel to micron conversion which is preserved in TIFF metadata
-        info = getImageInfo();
-        res = substring(info, indexOf(info, &quot;X Resolution: &quot;), indexOf(info, &quot;Y Resolution: &quot;));
-        res = split(res, &quot; &quot;);
-        res = res[2];
-        run(&quot;Set Scale...&quot;, &quot;distance=&quot; + res + &quot; known=1 pixel=1.000 unit=micron&quot;); // set scale in pixels/micron
+    <span class='fu'><a href='https://Rdatatable.gitlab.io/data.table/reference/rbindlist.html'>rbindlist</a></span><span class='op'>(</span><span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span><span class='op'>(</span><span class='va'>ROCR_results_threshold</span>,<span class='va'>ROCR_results_no_threshold</span><span class='op'>)</span>,fill <span class='op'>=</span> <span class='cn'>TRUE</span><span class='op'>)</span>
+  <span class='op'>}</span>
 
-        // print resolution
-        print(&quot;Resolution: &quot; + res + &quot; pixels per micron&quot;);
-        File.saveString(res, output + &quot;/&quot; + fname + &quot;_Resolution.txt&quot;) </code></pre>
-<h1 id="create-rois">Create ROIs</h1>
-<p>ROIs are created from the parsed VGG Image Annotator (VIA) annotations.</p>
-<pre class="ijm IJM"><code>        ////////////////////////////////////////////////////////////
-        /////  OPEN ROI LIST AND CREATE ROIS
-        ////////////////////////////////////////////////////////////
-
-        // open parsed VIA annotations for this crop
-        run(&quot;Table... &quot;, &quot;open=[&quot; + dir2 + fname + &quot;.csv]&quot;);
-        cname = fname + &quot; Coordinates&quot;;
-        Table.rename(fname + &quot;.csv&quot;, cname);
-        selectWindow(cname);
-
-        // define ROI arrays from VIA annotations
-        X = Table.getColumn(&quot;X&quot;, cname);
-        Y = Table.getColumn(&quot;Y&quot;, cname);
-        width = Table.getColumn(&quot;Width&quot;, cname);
-        height = Table.getColumn(&quot;Height&quot;, cname);
-        group = Table.getColumn(&quot;Group&quot;, cname);
-
-        // define property arrays from VIA annotations
-        type = Table.getColumn(&quot;Type&quot;, cname);
-        quality = Table.getColumn(&quot;Quality&quot;, cname);
-        annotator = Table.getColumn(&quot;Annotator&quot;, cname);
-        
-        // shift focus to image
-        selectWindow(image);
-        // setSlice(2); // change slice to membrane marker
-
-        // set counter for astrocytes and vessels
-        a = 0; m = 0; v = 0; p = 0; t = 0;
-
-        // iterate over annotated regions to create ROIs
-        for (i = 0; i &lt; X.length; i++) {
-
-            makeRectangle(X[i], Y[i], width[i], height[i]);
-            roiManager(&quot;add&quot;);
-            roiManager(&quot;Select&quot;, i);
-
-            if(group[i] == &quot;astrocyte&quot;) {
-                Roi.setGroup(236);
-                Roi.setProperty(&quot;Type&quot;, type[i]);
-                Roi.setProperty(&quot;Quality&quot;, quality[i]);
-                Roi.setProperty(&quot;Annotator&quot;, annotator[i]);
-                roiManager(&quot;update&quot;);
-                a = a + 1; roiManager(&quot;rename&quot;, &quot;Astrocyte&quot; + a);
-            }
-            
-            if(group[i] == &quot;microglia&quot;) {
-                Roi.setGroup(227);
-                Roi.setProperty(&quot;Type&quot;, type[i]);
-                Roi.setProperty(&quot;Quality&quot;, quality[i]);
-                Roi.setProperty(&quot;Annotator&quot;, annotator[i]);
-                roiManager(&quot;update&quot;);
-                m = m + 1; roiManager(&quot;rename&quot;, &quot;Microglia&quot; + m);
-            }
-            
-            if(group[i] == &quot;vessel&quot;) {
-                Roi.setGroup(87);
-                Roi.setProperty(&quot;Type&quot;, type[i]);
-                Roi.setProperty(&quot;Quality&quot;, quality[i]);
-                Roi.setProperty(&quot;Annotator&quot;, annotator[i]);
-                roiManager(&quot;update&quot;);
-                v = v + 1; roiManager(&quot;rename&quot;, &quot;Vessel&quot; + v);
-            }
-
-            if(group[i] == &quot;plaque&quot;) {
-                Roi.setGroup(27);
-                Roi.setProperty(&quot;Type&quot;, type[i]);
-                Roi.setProperty(&quot;Quality&quot;, quality[i]);
-                Roi.setProperty(&quot;Annotator&quot;, annotator[i]);
-                roiManager(&quot;update&quot;);
-                p = p + 1; roiManager(&quot;rename&quot;, &quot;Plaque&quot; + p);
-            }
-
-            if(group[i] == &quot;tangle&quot;) {
-                Roi.setGroup(114);
-                Roi.setProperty(&quot;Type&quot;, type[i]);
-                Roi.setProperty(&quot;Quality&quot;, quality[i]);
-                Roi.setProperty(&quot;Annotator&quot;, annotator[i]);
-                roiManager(&quot;update&quot;);
-                t = t + 1; roiManager(&quot;rename&quot;, &quot;Tangle&quot; + t);
-            }
-
-
-            
-        }
-
-        print(&quot;# of Astrocytes: &quot; + a);
-        print(&quot;# of Microglia: &quot; + m);
-        print(&quot;# of Vessels: &quot; + v);
-        print(&quot;# of Plaques: &quot; + p);
-        print(&quot;# of Tangles: &quot; + t);</code></pre>
-<h1 id="save-roi-coordinates">Save ROI Coordinates</h1>
-<p>Coordinates of each ROI are saved.</p>
-<pre class="ijm IJM"><code>        ////////////////////////////////////////////////////////////
-        /////  SAVE ROI COORDINATES
-        ////////////////////////////////////////////////////////////
-
-        // save ROI coordinates to compare with ABETA plaques
-        // these coordinates are relative to entire crop
-        // ROI extraction only saves coordinates relative to smaller VIA annotation
-        roiManager(&quot;List&quot;);
-        rname = fname + &quot; ROIs&quot;;
-        Table.rename(&quot;Overlay Elements of &quot; + image, rname);
-
-        // create empty arrays
-        nROI = roiManager(&quot;Count&quot;);
-        property_type = newArray(nROI); 
-        property_quality = newArray(nROI); 
-        property_annotator = newArray(nROI);
-        
-        // get ROI properties
-        for (k = 0; k &lt; nROI; k++) {
-            roiManager(&quot;Select&quot;, k);
-            property_type[k] = Roi.getProperty(&quot;Type&quot;);
-            property_quality[k] = Roi.getProperty(&quot;Quality&quot;);
-            property_annotator[k] = Roi.getProperty(&quot;Annotator&quot;);
-        }
-
-        // add to Table
-        Table.setColumn(&quot;Type&quot;, property_type, rname);
-        Table.setColumn(&quot;Quality&quot;, property_quality, rname);
-        Table.setColumn(&quot;Annotator&quot;, property_annotator, rname);
-        
-        // save coordinates
-        selectWindow(rname);
-        saveAs(&quot;Results&quot;, output + &quot;/&quot; + fname + &quot;_ROIs.csv&quot;);
-
-        // wipe results
-        Table.reset(fname + &quot;_ROIs.csv&quot;);
-        selectWindow(fname + &quot;_ROIs.csv&quot;);
-        run(&quot;Close&quot;);</code></pre>
-<h1 id="roi-segmentation">ROI Segmentation</h1>
-<p>For each newly-created ROI, the sub-image is segmented from the TIFF file. After adaptive thresholding using Otsu’s method, the mean gray intensity (MGI) of each channel is measured. Finally, each ROI is interpolated to a 64 x 64 image as input to the convolutional neural network (CNN).</p>
-<pre class="ijm IJM"><code>        ////////////////////////////////////////////////////////////
-        /////  ROI SEGMENTATION
-        ////////////////////////////////////////////////////////////
-
-        // create ROI directories
-        dirA = output + &quot;/&quot; + celldirs[0];
-        dirM = output + &quot;/&quot; + celldirs[1];
-        dirV = output + &quot;/&quot; + celldirs[2];
-        dirP = output + &quot;/&quot; + celldirs[3];
-        dirT = output + &quot;/&quot; + celldirs[4];
-        File.makeDirectory(dirA); File.makeDirectory(dirA + &quot;/ROIs&quot;);
-        File.makeDirectory(dirM); File.makeDirectory(dirM + &quot;/ROIs&quot;);
-        File.makeDirectory(dirV); File.makeDirectory(dirV + &quot;/ROIs&quot;);
-        File.makeDirectory(dirP); File.makeDirectory(dirP + &quot;/ROIs&quot;);
-        File.makeDirectory(dirT); File.makeDirectory(dirT + &quot;/ROIs&quot;);
-
-        // get total number of ROIs
-        nROI = roiManager(&quot;Count&quot;);
-
-        // show all ROIs
-        roiManager(&quot;show all with labels&quot;);
-        a = 0; m = 0; v = 0; p = 0; t = 0;
-        mycounter = 0;
-        
-        
-        for (k = 0; k &lt; nROI; k++) {
-            
-            // duplicate ROI
-            roiManager(&quot;Select&quot;, k);
-            if (Roi.getGroup() == 236) { cellname = &quot;Astrocyte&quot;; celldir = dirA; a = a + 1; mycounter = a; }
-            if (Roi.getGroup() == 227) { cellname = &quot;Microglia&quot;; celldir = dirM; m = m + 1; mycounter = m; }
-            if (Roi.getGroup() == 87) { cellname = &quot;Vessel&quot;; celldir = dirV; v = v + 1; mycounter = v; }
-            if (Roi.getGroup() == 27) { cellname = &quot;Plaque&quot;; celldir = dirP; p = p + 1; mycounter = p; }
-            if (Roi.getGroup() == 114) { cellname = &quot;Tangle&quot;; celldir = dirT; t = t + 1; mycounter = t; }
-            ROIname = cellname + mycounter;
-            run(&quot;Duplicate...&quot;, &quot;title=&quot; + ROIname + &quot; duplicate&quot;);
-
-
-            ////////////////////////////////////////////////////////////
-            /////  CREATE INSIDE ROI AND REMOVE BACKGROUND
-            ////////////////////////////////////////////////////////////
-
-            if (cellname == &quot;Astrocyte&quot; || cellname == &quot;Vessel&quot;) {
-                run(&quot;Duplicate...&quot;, &quot;title=MarkerMask duplicate channels=2&quot;); // duplicate ALDH1L1  
-            }
-            else if (cellname == &quot;Microglia&quot;) {
-                run(&quot;Duplicate...&quot;, &quot;title=MarkerMask duplicate channels=3&quot;); // duplicate IBA1
-            } else if (cellname == &quot;Plaque&quot;) {
-                run(&quot;Duplicate...&quot;, &quot;title=MarkerMask duplicate channels=16&quot;); // duplicate ABETA
-            } else {
-                run(&quot;Duplicate...&quot;, &quot;title=MarkerMask duplicate channels=17&quot;); // duplicate PHF1
-            }
-
-            // auto-threshold using Otsu method
-            run(&quot;Auto Threshold&quot;, &quot;method=Otsu white&quot;);
-            run(&quot;Analyze Particles...&quot;, &quot;include add stack&quot;);
-            selectWindow(&quot;MarkerMask&quot;);
-            close();
-
-
-            // create array to select only new ROIs
-            selectWindow(ROIname);
-            oldROIs = Array.getSequence(nROI);
-            newROIs = Array.getSequence(roiManager(&quot;Count&quot;));
-
-            // ONLY if new ROIs have been added
-            if (roiManager(&quot;Count&quot;) &gt; nROI) {
-
-
-                // delete preexisting ROI indices from new ROI array 
-                for (r = 0; r &lt; oldROIs.length; r++) {
-                    newROIs = Array.deleteIndex(newROIs, 0);
-                }
-    
-                // combine multiple ROIs if more than one was created
-                if(newROIs.length &gt; 1) {
-                    roiManager(&quot;select&quot;, newROIs);
-                    roiManager(&quot;combine&quot;);
-                    roiManager(&quot;add&quot;);
-                    roiManager(&quot;select&quot;, newROIs);
-                    roiManager(&quot;delete&quot;);
-                }
-
-                        
-                // clear outside of ROI
-                roiManager(&quot;Select&quot;, nROI);
-                roiManager(&quot;rename&quot;, cellname + mycounter + &quot;_ROI&quot;);
-                // setBackgroundColor(255, 255, 255);
-                setBackgroundColor(0, 0, 0);
-                run(&quot;Clear Outside&quot;, &quot;stack&quot;);
+  <span class='co'># get results of each replicate</span>
+  <span class='va'>bootstrap_runs</span> <span class='op'>&lt;-</span> <span class='fu'><a href='https://purrr.tidyverse.org/reference/map.html'>map_dfr</a></span><span class='op'>(</span><span class='fl'>1</span><span class='op'>:</span><span class='fl'>500</span>,<span class='op'>~</span><span class='fu'>boot_CIs</span><span class='op'>(</span><span class='va'>.x</span>,data_to_resample <span class='op'>=</span> <span class='va'>ROCR_prediction</span><span class='op'>)</span><span class='op'>)</span>
+  <span class='co'># cast so each row is a replicate, each col is a measure</span>
+  <span class='va'>bootstrap_runs_cast</span> <span class='op'>&lt;-</span> <span class='fu'><a href='https://Rdatatable.gitlab.io/data.table/reference/dcast.data.table.html'>dcast</a></span><span class='op'>(</span><span class='va'>bootstrap_runs</span>,<span class='va'>model_name</span><span class='op'>+</span><span class='va'>threshold_criteria</span><span class='op'>+</span><span class='va'>replicate</span><span class='op'>~</span><span class='va'>Measure</span>,value.var <span class='op'>=</span> <span class='st'>'Value'</span><span class='op'>)</span>
+  <span class='co'># get quantiles accross measure cols</span>
+  <span class='va'>bootstrap_aggregation</span> <span class='op'>&lt;-</span> <span class='fu'><a href='https://purrr.tidyverse.org/reference/imap.html'>imap_dfr</a></span><span class='op'>(</span><span class='va'>bootstrap_runs_cast</span><span class='op'>[</span>,<span class='fl'>4</span><span class='op'>:</span><span class='fu'><a href='https://rdrr.io/r/base/nrow.html'>ncol</a></span><span class='op'>(</span><span class='va'>bootstrap_runs_cast</span><span class='op'>)</span><span class='op'>]</span>,<span class='op'>~</span><span class='fu'><a href='https://Rdatatable.gitlab.io/data.table/reference/data.table.html'>data.table</a></span><span class='op'>(</span>Measure <span class='op'>=</span> <span class='va'>.y</span>,CI_l <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/stats/quantile.html'>quantile</a></span><span class='op'>(</span><span class='va'>.x</span>,<span class='fl'>.025</span>,na.rm <span class='op'>=</span> <span class='cn'>T</span><span class='op'>)</span>,CI_u <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/stats/quantile.html'>quantile</a></span><span class='op'>(</span><span class='va'>.x</span>,<span class='fl'>.975</span>,na.rm <span class='op'>=</span> <span class='cn'>T</span><span class='op'>)</span><span class='op'>)</span><span class='op'>)</span>
 
 
 
-                ////////////////////////////////////////////////////////////
-                /////  MEASURE AND SAVE ROI
-                ////////////////////////////////////////////////////////////
-
-                // measure each channel based on new ROI
-                for (s = 1; s &lt;= nSlices; s++) {
-                    setSlice(s);
-                    run(&quot;Measure&quot;);                                     
-                }
-                
-                // scale for CNN and save
-                run(&quot;Size...&quot;, &quot;width=64 height=64 average interpolation=None&quot;); // no interpolation keeps edge of ROI sharp
-                saveAs(&quot;Tiff&quot;, celldir + &quot;/&quot; + condition + &quot;_&quot; + fname + &quot;_&quot; + cellname + mycounter + &quot;.tif&quot;); // save in crop specific folder
-    
-    
-                // save ROI
-                roiManager(&quot;Select&quot;, nROI);
-                roiManager(&quot;save selected&quot;, celldir + &quot;/ROIs/&quot; + condition + &quot;_&quot; + fname + &quot;_&quot; + cellname + mycounter + &quot;.roi&quot;)
-                roiManager(&quot;delete&quot;);
-
-            } else { // if no ROI was created
-                print(&quot;ROI #&quot; + k + &quot; NOT CREATED: &quot; + cellname + &quot; &quot; + mycounter);
-            }
-
-            // close image window
-            close();
-            
-        }</code></pre>
-<h1 id="save-measurements">Save Measurements</h1>
-<p>For each TIFF image, the ROI measurements are saved and the image is closed.</p>
-<pre class="ijm IJM"><code>        ////////////////////////////////////////////////////////////
-        /////  SAVE AND CLOSE CROP
-        ////////////////////////////////////////////////////////////
-
-        // update ROI manager GUI for output
-        roiManager(&quot;show all with labels&quot;);
-
-        // save results
-        saveAs(&quot;Results&quot;, output + &quot;/&quot; + fname + &quot;_Measurements.csv&quot;);
-
-        // save ROIs to ZIP file
-        roiManager(&quot;Save&quot;, output + &quot;/&quot; + fname + &quot;_ROIs.zip&quot;);
-        
-        // save original image
-        saveAs(&quot;Tiff&quot;, output + &quot;/&quot; + fname + &quot;_Crop.tif&quot;);
-
-        // clear all results
-        Table.reset(&quot;Results&quot;);
-        roiManager(&quot;reset&quot;);
-        
-        // close VIA annotations
-        selectWindow(cname);
-        run(&quot;Close&quot;);
-
-        // close crop
-        selectWindow(fname + &quot;_Crop.tif&quot;);
-        close();
-
-        
-    }
-
-    selectWindow(&quot;Results&quot;);
-    run(&quot;Close&quot;)
-
-    print(&quot;&quot;); // add new line
-    getDateAndTime(year, month, dayOfWeek, dayOfMonth, hour, minute, second, msec);
-    print(&quot;END TIME: &quot; + hour + &quot;:&quot; + minute + &quot;:&quot; + second);
-
-    selectWindow(&quot;Log&quot;);
-    saveAs(&quot;text&quot;, outdir + &quot;Log.txt&quot;); // save in crop specific folder
-
-}</code></pre>
-<div class="sourceCode" id="cb9"><pre class="sourceCode r distill-force-highlighting-css"><code class="sourceCode r"></code></pre></div>
+  <span class='co'># bind metrics together</span>
+  <span class='va'>final_metrics</span> <span class='op'>&lt;-</span> <span class='fu'><a href='https://Rdatatable.gitlab.io/data.table/reference/rbindlist.html'>rbindlist</a></span><span class='op'>(</span><span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span><span class='op'>(</span><span class='va'>ROCR_results_threshold</span>,<span class='va'>ROCR_results_no_threshold</span><span class='op'>)</span>,fill <span class='op'>=</span> <span class='cn'>TRUE</span><span class='op'>)</span>
+  <span class='va'>final_metrics</span><span class='op'>[</span><span class='va'>bootstrap_aggregation</span>,on<span class='op'>=</span><span class='fu'>.</span><span class='op'>(</span><span class='va'>Measure</span><span class='op'>)</span>,<span class='fu'>`:=`</span> <span class='op'>(</span>CI_l <span class='op'>=</span> <span class='va'>i.CI_l</span>,CI_u <span class='op'>=</span> <span class='va'>i.CI_u</span><span class='op'>)</span><span class='op'>]</span>
+  <span class='kw'><a href='https://rdrr.io/r/base/function.html'>return</a></span><span class='op'>(</span><span class='va'>final_metrics</span><span class='op'>)</span>
+<span class='op'>}</span>
+</code></pre>
+</div>
+</div>
+<p>Map previously defined function.</p>
+<div class="layout-chunk" data-layout="l-body">
+<div class="sourceCode">
+<pre class="sourceCode r"><code class="sourceCode r"><span class='va'>all_experiments_performance_metrics</span><span class='op'>&lt;-</span> <span class='fu'><a href='https://purrr.tidyverse.org/reference/imap.html'>imap_dfr</a></span><span class='op'>(</span><span class='va'>all_experiments</span>, <span class='op'>~</span><span class='fu'>compute_model_performance</span><span class='op'>(</span>model_name <span class='op'>=</span> <span class='va'>.y</span>, model_preds <span class='op'>=</span> <span class='va'>.x</span><span class='op'>)</span><span class='op'>)</span>
+</code></pre>
+</div>
+</div>
+<div class="sourceCode" id="cb1"><pre class="sourceCode r distill-force-highlighting-css"><code class="sourceCode r"></code></pre></div>
 <!--radix_placeholder_article_footer-->
 <!--/radix_placeholder_article_footer-->
 </div>

@@ -58,4 +58,9 @@ navbar:
           href: astrocyte-cnn
         - text: "Microglia CNN"
           href: microglia-cnn
+        - text: "Plot ROC Curves"
+          href: plot-roc-curves
+        - text: "---"
+        - text: "Performance Evaluation"
+          href: performance-evaluation       
 output: distill::distill_article

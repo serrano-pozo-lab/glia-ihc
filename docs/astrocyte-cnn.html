@@ -2250,6 +2250,9 @@ Supervised ML
 <hr/>
 <a href="astrocyte-cnn">Astrocyte CNN</a>
 <a href="microglia-cnn">Microglia CNN</a>
+<a href="plot-roc-curves">Plot ROC Curves</a>
+<hr/>
+<a href="performance-evaluation">Performance Evaluation</a>
 </div>
 </div>
 <a href="https://github.com/serrano-pozo-lab/glia-ihc" aria-label="Link to source">
@@ -2342,31 +2345,42 @@ Supervised ML
 </div>
 <h1 id="define-data-transformations">Define Data Transformations</h1>
 <p>The order of astrocyte markers (out of 17 markers in the original crops) prior to data transformation is specified below, used in the <code>select_channels()</code> function (zero-indexed).</p>
-<table>
+<table style="width:97%;">
+<colgroup>
+<col style="width: 9%" />
+<col style="width: 13%" />
+<col style="width: 9%" />
+<col style="width: 11%" />
+<col style="width: 9%" />
+<col style="width: 9%" />
+<col style="width: 11%" />
+<col style="width: 11%" />
+<col style="width: 11%" />
+</colgroup>
 <thead>
 <tr class="header">
-<th>DAPI</th>
-<th>ALDH1L1</th>
-<th>GFAP</th>
-<th>YKL40</th>
-<th>VIM</th>
-<th>TSPO</th>
-<th>EAAT1</th>
-<th>EAAT2</th>
-<th>GS</th>
+<th style="text-align: center;">DAPI</th>
+<th style="text-align: center;">ALDH1L1</th>
+<th style="text-align: center;">GFAP</th>
+<th style="text-align: center;">YKL40</th>
+<th style="text-align: center;">VIM</th>
+<th style="text-align: center;">TSPO</th>
+<th style="text-align: center;">EAAT1</th>
+<th style="text-align: center;">EAAT2</th>
+<th style="text-align: center;">GS</th>
 </tr>
 </thead>
 <tbody>
 <tr class="odd">
-<td>1</td>
-<td>2</td>
-<td>4</td>
-<td>13</td>
-<td>11</td>
-<td>6</td>
-<td>10</td>
-<td>7</td>
-<td>14</td>
+<td style="text-align: center;">1</td>
+<td style="text-align: center;">2</td>
+<td style="text-align: center;">4</td>
+<td style="text-align: center;">13</td>
+<td style="text-align: center;">11</td>
+<td style="text-align: center;">6</td>
+<td style="text-align: center;">10</td>
+<td style="text-align: center;">7</td>
+<td style="text-align: center;">14</td>
 </tr>
 </tbody>
 </table>

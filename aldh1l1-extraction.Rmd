@@ -1,5 +1,5 @@
 ---
-title: "Astrocyte Annotation"
+title: "Astrocyte Channel Extraction"
 description: |
  This ImageJ script extracts the ALDH1L1 channel from multi-channel TIFF images and assigns each image a random alphanumeric code for blinded astrocyte annotation.
 output:

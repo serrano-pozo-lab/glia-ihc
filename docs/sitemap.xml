@@ -6,15 +6,15 @@
   </url>
   <url>
     <loc>https://serranopozolab.org/glia-ihc/abeta-extraction.html</loc>
-    <lastmod>2021-07-10T14:35:33-07:00</lastmod>
+    <lastmod>2021-07-10T19:49:47-07:00</lastmod>
   </url>
   <url>
     <loc>https://serranopozolab.org/glia-ihc/aldh1l1-extraction.html</loc>
-    <lastmod>2021-07-10T14:36:01-07:00</lastmod>
+    <lastmod>2021-07-10T19:50:00-07:00</lastmod>
   </url>
   <url>
     <loc>https://serranopozolab.org/glia-ihc/astrocyte-cnn.html</loc>
-    <lastmod>2021-07-10T18:07:46-07:00</lastmod>
+    <lastmod>2021-07-10T20:41:01-07:00</lastmod>
   </url>
   <url>
     <loc>https://serranopozolab.org/glia-ihc/data-visualization.html</loc>
@@ -38,7 +38,7 @@
   </url>
   <url>
     <loc>https://serranopozolab.org/glia-ihc/</loc>
-    <lastmod>2021-07-10T14:21:52-07:00</lastmod>
+    <lastmod>2021-07-10T20:33:13-07:00</lastmod>
   </url>
   <url>
     <loc>https://serranopozolab.org/glia-ihc/microglia-cnn.html</loc>
@@ -61,8 +61,16 @@
     <lastmod>2021-07-10T15:50:15-07:00</lastmod>
   </url>
   <url>
+    <loc>https://serranopozolab.org/glia-ihc/performance-evaluation.html</loc>
+    <lastmod>2021-07-10T20:16:59-07:00</lastmod>
+  </url>
+  <url>
     <loc>https://serranopozolab.org/glia-ihc/phf1-extraction.html</loc>
     <lastmod>2021-07-10T14:35:47-07:00</lastmod>
+  </url>
+  <url>
+    <loc>https://serranopozolab.org/glia-ihc/plot-roc-curves.html</loc>
+    <lastmod>2021-07-10T20:06:12-07:00</lastmod>
   </url>
   <url>
     <loc>https://serranopozolab.org/glia-ihc/reorder-channels.html</loc>
@@ -74,6 +82,6 @@
   </url>
   <url>
     <loc>https://serranopozolab.org/glia-ihc/spectral-clustering.html</loc>
-    <lastmod>2021-07-10T15:38:40-07:00</lastmod>
+    <lastmod>2021-07-10T18:37:35-07:00</lastmod>
   </url>
 </urlset>

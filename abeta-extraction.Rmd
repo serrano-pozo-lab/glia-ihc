@@ -1,5 +1,5 @@
 ---
-title: "Plaque Annotation"
+title: "Plaque Channel Extraction"
 description: |
  This ImageJ script extracts the ABETA channel from multi-channel TIFF images and assigns each image a random alphanumeric code for blinded plaque annotation.
 output:
