@@ -86,7 +86,7 @@ code span.wa { color: #5e5e5e; font-style: italic; } /* Warning */
 </style>
 
   <!--radix_placeholder_meta_tags-->
-  <title>IHC and ML to Phenotype AD Glia: Tangle Annotation</title>
+  <title>IHC and ML to Phenotype AD Glia: Tangle Channel Extraction</title>
 
   <meta property="description" itemprop="description" content="This ImageJ script extracts the PHF1 and DAPI channels from multi-channel TIFF images, merges both channels, and assigns each image a random alphanumeric code for blinded tangle annotation and classification as intraneuronal vs. extraneuronal."/>
 
@@ -95,7 +95,7 @@ code span.wa { color: #5e5e5e; font-style: italic; } /* Warning */
   <meta name="article:author" content="Ayush Noori"/>
 
   <!--  https://developers.facebook.com/docs/sharing/webmasters#markup -->
-  <meta property="og:title" content="IHC and ML to Phenotype AD Glia: Tangle Annotation"/>
+  <meta property="og:title" content="IHC and ML to Phenotype AD Glia: Tangle Channel Extraction"/>
   <meta property="og:type" content="article"/>
   <meta property="og:description" content="This ImageJ script extracts the PHF1 and DAPI channels from multi-channel TIFF images, merges both channels, and assigns each image a random alphanumeric code for blinded tangle annotation and classification as intraneuronal vs. extraneuronal."/>
   <meta property="og:locale" content="en_US"/>
@@ -103,14 +103,14 @@ code span.wa { color: #5e5e5e; font-style: italic; } /* Warning */
 
   <!--  https://dev.twitter.com/cards/types/summary -->
   <meta property="twitter:card" content="summary"/>
-  <meta property="twitter:title" content="IHC and ML to Phenotype AD Glia: Tangle Annotation"/>
+  <meta property="twitter:title" content="IHC and ML to Phenotype AD Glia: Tangle Channel Extraction"/>
   <meta property="twitter:description" content="This ImageJ script extracts the PHF1 and DAPI channels from multi-channel TIFF images, merges both channels, and assigns each image a random alphanumeric code for blinded tangle annotation and classification as intraneuronal vs. extraneuronal."/>
 
   <!--/radix_placeholder_meta_tags-->
   <!--radix_placeholder_rmarkdown_metadata-->
 
   <script type="text/json" id="radix-rmarkdown-metadata">
-  {"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["title","description","author","output"]}},"value":[{"type":"character","attributes":{},"value":["Tangle Annotation"]},{"type":"character","attributes":{},"value":["This ImageJ script extracts the PHF1 and DAPI channels from multi-channel TIFF images, merges both channels, and assigns each image a random alphanumeric code for blinded tangle annotation and classification as intraneuronal vs. extraneuronal.\n"]},{"type":"list","attributes":{},"value":[{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["first_name","last_name","url","affiliation","affiliation_url","orcid_id"]}},"value":[{"type":"character","attributes":{},"value":["Ayush"]},{"type":"character","attributes":{},"value":["Noori"]},{"type":"character","attributes":{},"value":["https://www.github.com/ayushnoori"]},{"type":"character","attributes":{},"value":["Massachusetts General Hospital"]},{"type":"character","attributes":{},"value":["https://www.serranopozolab.org"]},{"type":"character","attributes":{},"value":["0000-0003-1420-1236"]}]}]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["distill::distill_article"]}},"value":[{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["toc"]}},"value":[{"type":"logical","attributes":{},"value":[true]}]}]}]}
+  {"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["title","description","author","output"]}},"value":[{"type":"character","attributes":{},"value":["Tangle Channel Extraction"]},{"type":"character","attributes":{},"value":["This ImageJ script extracts the PHF1 and DAPI channels from multi-channel TIFF images, merges both channels, and assigns each image a random alphanumeric code for blinded tangle annotation and classification as intraneuronal vs. extraneuronal.\n"]},{"type":"list","attributes":{},"value":[{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["first_name","last_name","url","affiliation","affiliation_url","orcid_id"]}},"value":[{"type":"character","attributes":{},"value":["Ayush"]},{"type":"character","attributes":{},"value":["Noori"]},{"type":"character","attributes":{},"value":["https://www.github.com/ayushnoori"]},{"type":"character","attributes":{},"value":["Massachusetts General Hospital"]},{"type":"character","attributes":{},"value":["https://www.serranopozolab.org"]},{"type":"character","attributes":{},"value":["0000-0003-1420-1236"]}]}]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["distill::distill_article"]}},"value":[{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["toc"]}},"value":[{"type":"logical","attributes":{},"value":[true]}]}]}]}
   </script>
   <!--/radix_placeholder_rmarkdown_metadata-->
   <!--radix_placeholder_navigation_in_header-->
@@ -1980,7 +1980,11 @@ code span.wa { color: #5e5e5e; font-style: italic; } /* Warning */
   }
 
   .sourceCode {
-    background-color: #fdfffc;
+    background-color: #fdfffc !important;
+  }
+
+  d-article div.sourceCode {
+    background-color: #fdfffc !important;
   }
 
   /* FLOATING TOC */
@@ -2179,7 +2183,7 @@ code span.wa { color: #5e5e5e; font-style: italic; } /* Warning */
 <!--radix_placeholder_front_matter-->
 
 <script id="distill-front-matter" type="text/json">
-{"title":"Tangle Annotation","description":"This ImageJ script extracts the PHF1 and DAPI channels from multi-channel TIFF images, merges both channels, and assigns each image a random alphanumeric code for blinded tangle annotation and classification as intraneuronal vs. extraneuronal.","authors":[{"author":"Ayush Noori","authorURL":"https://www.github.com/ayushnoori","affiliation":"Massachusetts General Hospital","affiliationURL":"https://www.serranopozolab.org","orcidID":"0000-0003-1420-1236"}]}
+{"title":"Tangle Channel Extraction","description":"This ImageJ script extracts the PHF1 and DAPI channels from multi-channel TIFF images, merges both channels, and assigns each image a random alphanumeric code for blinded tangle annotation and classification as intraneuronal vs. extraneuronal.","authors":[{"author":"Ayush Noori","authorURL":"https://www.github.com/ayushnoori","affiliation":"Massachusetts General Hospital","affiliationURL":"https://www.serranopozolab.org","orcidID":"0000-0003-1420-1236"}]}
 </script>
 
 <!--/radix_placeholder_front_matter-->
@@ -2262,7 +2266,7 @@ Supervised ML
 <!--/radix_placeholder_site_before_body-->
 
 <div class="d-title">
-<h1>Tangle Annotation</h1>
+<h1>Tangle Channel Extraction</h1>
 <!--radix_placeholder_categories-->
 <!--/radix_placeholder_categories-->
 <p><p>This ImageJ script extracts the PHF1 and DAPI channels from multi-channel TIFF images, merges both channels, and assigns each image a random alphanumeric code for blinded tangle annotation and classification as intraneuronal vs. extraneuronal.</p></p>

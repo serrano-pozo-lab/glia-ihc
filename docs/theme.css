@@ -125,7 +125,11 @@ body {
 }
 
 .sourceCode {
-  background-color: #fdfffc;
+  background-color: #fdfffc !important;
+}
+
+d-article div.sourceCode {
+  background-color: #fdfffc !important;
 }
 
 /* FLOATING TOC */
