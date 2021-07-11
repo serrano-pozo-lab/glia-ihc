@@ -21,8 +21,7 @@ Additional required libraries are specified in each script. Image segmentation w
 ## Workflow
 
 Please see the analysis workflow below.
-
-<img src="https://github.com/serrano-pozo-lab/glia-ihc/blob/main/images/flowchart.svg" width="100%">
+<a href="https://www.serranopozolab.org/glia-ihc/#workflow" target="_blank" rel="noreferrer noopener"><img src="https://github.com/serrano-pozo-lab/glia-ihc/blob/main/images/flowchart.svg" width="80%"></a>
 
 ## Documentation
 
