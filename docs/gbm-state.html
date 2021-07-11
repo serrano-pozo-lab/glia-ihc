@@ -86,30 +86,30 @@ code span.wa { color: #5e5e5e; font-style: italic; } /* Warning */
 </style>
 
   <!--radix_placeholder_meta_tags-->
-  <title>IHC and ML to Phenotype AD Glia: Microglia Annotation</title>
+  <title>IHC and ML to Phenotype AD Glia: Gradient Boosting Machines by State</title>
 
-  <meta property="description" itemprop="description" content="This ImageJ script extracts the IBA1 channel from multi-channel TIFF images and assigns each image a random alphanumeric code for blinded microglia annotation."/>
+  <meta property="description" itemprop="description" content="This R script trains gradient boosting machines (GBM) models to perform the state classification task (i.e., predict homeostatic vs. intermediate vs. reactive)."/>
 
   <link rel="icon" type="image/vnd.microsoft.icon" href="images/favicon.ico"/>
 
 
   <!--  https://developers.facebook.com/docs/sharing/webmasters#markup -->
-  <meta property="og:title" content="IHC and ML to Phenotype AD Glia: Microglia Annotation"/>
+  <meta property="og:title" content="IHC and ML to Phenotype AD Glia: Gradient Boosting Machines by State"/>
   <meta property="og:type" content="article"/>
-  <meta property="og:description" content="This ImageJ script extracts the IBA1 channel from multi-channel TIFF images and assigns each image a random alphanumeric code for blinded microglia annotation."/>
+  <meta property="og:description" content="This R script trains gradient boosting machines (GBM) models to perform the state classification task (i.e., predict homeostatic vs. intermediate vs. reactive)."/>
   <meta property="og:locale" content="en_US"/>
   <meta property="og:site_name" content="IHC and ML to Phenotype AD Glia"/>
 
   <!--  https://dev.twitter.com/cards/types/summary -->
   <meta property="twitter:card" content="summary"/>
-  <meta property="twitter:title" content="IHC and ML to Phenotype AD Glia: Microglia Annotation"/>
-  <meta property="twitter:description" content="This ImageJ script extracts the IBA1 channel from multi-channel TIFF images and assigns each image a random alphanumeric code for blinded microglia annotation."/>
+  <meta property="twitter:title" content="IHC and ML to Phenotype AD Glia: Gradient Boosting Machines by State"/>
+  <meta property="twitter:description" content="This R script trains gradient boosting machines (GBM) models to perform the state classification task (i.e., predict homeostatic vs. intermediate vs. reactive)."/>
 
   <!--/radix_placeholder_meta_tags-->
   <!--radix_placeholder_rmarkdown_metadata-->
 
   <script type="text/json" id="radix-rmarkdown-metadata">
-  {"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["title","description","output"]}},"value":[{"type":"character","attributes":{},"value":["Microglia Annotation"]},{"type":"character","attributes":{},"value":["This ImageJ script extracts the IBA1 channel from multi-channel TIFF images and assigns each image a random alphanumeric code for blinded microglia annotation.\n"]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["distill::distill_article"]}},"value":[{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["toc"]}},"value":[{"type":"logical","attributes":{},"value":[true]}]}]}]}
+  {"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["title","description","output"]}},"value":[{"type":"character","attributes":{},"value":["Gradient Boosting Machines by State"]},{"type":"character","attributes":{},"value":["This R script trains gradient boosting machines (GBM) models to perform the state classification task (i.e., predict homeostatic vs. intermediate vs. reactive).\n"]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["distill::distill_article"]}},"value":[{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["toc"]}},"value":[{"type":"logical","attributes":{},"value":[true]}]}]}]}
   </script>
   <!--/radix_placeholder_rmarkdown_metadata-->
   <!--radix_placeholder_navigation_in_header-->
@@ -2177,7 +2177,7 @@ code span.wa { color: #5e5e5e; font-style: italic; } /* Warning */
 <!--radix_placeholder_front_matter-->
 
 <script id="distill-front-matter" type="text/json">
-{"title":"Microglia Annotation","description":"This ImageJ script extracts the IBA1 channel from multi-channel TIFF images and assigns each image a random alphanumeric code for blinded microglia annotation.","authors":[]}
+{"title":"Gradient Boosting Machines by State","description":"This R script trains gradient boosting machines (GBM) models to perform the state classification task (i.e., predict homeostatic vs. intermediate vs. reactive).","authors":[]}
 </script>
 
 <!--/radix_placeholder_front_matter-->
@@ -2257,112 +2257,260 @@ Supervised ML
 <!--/radix_placeholder_site_before_body-->
 
 <div class="d-title">
-<h1>Microglia Annotation</h1>
+<h1>Gradient Boosting Machines by State</h1>
 <!--radix_placeholder_categories-->
 <!--/radix_placeholder_categories-->
-<p><p>This ImageJ script extracts the IBA1 channel from multi-channel TIFF images and assigns each image a random alphanumeric code for blinded microglia annotation.</p></p>
+<p><p>This R script trains gradient boosting machines (GBM) models to perform the state classification task (i.e., predict homeostatic vs. intermediate vs. reactive).</p></p>
 </div>
 
 
 <div class="d-article">
-<p>This script is written in the ImageJ Macro Language (IJM).</p>
-<pre class="ijm IJM"><code>macro &quot;IBA1 Channel Extraction&quot; {
+<div class="d-contents d-contents-float">
+<nav class="l-text toc figcaption" id="TOC">
+<h3>Contents</h3>
+<ul>
+<li><a href="#dependencies">Dependencies</a></li>
+<li><a href="#load-data">Load Data</a></li>
+<li><a href="#merge-data">Merge Data</a></li>
+<li><a href="#train-gbm-model">Train GBM Model</a></li>
+<li><a href="#perform-machine-learning">Perform Machine Learning</a></li>
+</ul>
+</nav>
+</div>
+<h1 id="dependencies">Dependencies</h1>
+<p>Load requisite packages and define directories.</p>
+<div class="layout-chunk" data-layout="l-body">
+<div class="sourceCode">
+<pre class="sourceCode r"><code class="sourceCode r"><span class='co'># data manipulation</span>
+<span class='kw'><a href='https://rdrr.io/r/base/library.html'>library</a></span><span class='op'>(</span><span class='va'><a href='https://r-datatable.com'>data.table</a></span><span class='op'>)</span>
+<span class='kw'><a href='https://rdrr.io/r/base/library.html'>library</a></span><span class='op'>(</span><span class='va'><a href='http://purrr.tidyverse.org'>purrr</a></span><span class='op'>)</span>
+<span class='kw'><a href='https://rdrr.io/r/base/library.html'>library</a></span><span class='op'>(</span><span class='va'><a href='https://magrittr.tidyverse.org'>magrittr</a></span><span class='op'>)</span>
 
-    setBatchMode(true);
+<span class='co'># data visualization</span>
+<span class='kw'><a href='https://rdrr.io/r/base/library.html'>library</a></span><span class='op'>(</span><span class='va'><a href='https://ggplot2.tidyverse.org'>ggplot2</a></span><span class='op'>)</span>
 
-    input = getDirectory(&quot;Choose input data folder.&quot;);
-    files = getFileList(input);
-    // Array.show(files);
+<span class='co'># fast file system operations</span>
+<span class='kw'><a href='https://rdrr.io/r/base/library.html'>library</a></span><span class='op'>(</span><span class='va'><a href='http://fs.r-lib.org'>fs</a></span><span class='op'>)</span>
 
-    dir = &quot;C:/Users/ayush/Dropbox (Partners HealthCare)/Single-Cell Multiplex IHC/Multiplex IHC Project/Multiplex IHC (GitLab)/&quot;;
-    datadir = dir + &quot;Data/2 - Channel Extraction/Microglia/&quot;;
+<span class='co'># gradient boosted machines</span>
+<span class='kw'><a href='https://rdrr.io/r/base/library.html'>library</a></span><span class='op'>(</span><span class='va'><a href='https://github.com/topepo/caret/'>caret</a></span><span class='op'>)</span>
+<span class='kw'><a href='https://rdrr.io/r/base/library.html'>library</a></span><span class='op'>(</span><span class='va'><a href='https://github.com/gbm-developers/gbm'>gbm</a></span><span class='op'>)</span>
 
+<span class='co'># ROC curve</span>
+<span class='kw'><a href='https://rdrr.io/r/base/library.html'>library</a></span><span class='op'>(</span><span class='va'><a href='http://expasy.org/tools/pROC/'>pROC</a></span><span class='op'>)</span>
+<span class='kw'><a href='https://rdrr.io/r/base/library.html'>library</a></span><span class='op'>(</span><span class='va'><a href='http://sachsmc.github.io/plotROC'>plotROC</a></span><span class='op'>)</span>
 
-    ////////////////////////////////////////////////////////////
-    /////  FUNCTION FOR RANDOM ID
-    ////////////////////////////////////////////////////////////
-    
-    function randomString(length, chars) {
-        result = &quot;&quot;;
-        for (i = 0; i &lt; length; i++) {
-            maxlen = lengthOf(chars)-1;
-            rand = round(random * maxlen);
-            result +=  substring(chars, rand, rand+1);
-        }
-        return result;
-    }
-    
+<span class='co'># utility functions</span>
+<span class='kw'><a href='https://rdrr.io/r/base/library.html'>library</a></span><span class='op'>(</span><span class='va'><a href='https://www.ayushnoori.com/brainstorm'>brainstorm</a></span><span class='op'>)</span>
+</code></pre>
+</div>
+</div>
+<p>Note that directories are relative to the R project path.</p>
+<div class="layout-chunk" data-layout="l-body">
+<div class="sourceCode">
+<pre class="sourceCode r"><code class="sourceCode r"><span class='co'># create file structure</span>
+<span class='va'>celltypes</span> <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='st'>"Astrocyte"</span>, <span class='st'>"Microglia"</span>, <span class='st'>"Vessel"</span><span class='op'>)</span> <span class='op'>%&gt;%</span> <span class='fu'>purrr</span><span class='fu'>::</span><span class='fu'><a href='https://purrr.tidyverse.org/reference/set_names.html'>set_names</a></span><span class='op'>(</span><span class='op'>)</span>
 
-    ////////////////////////////////////////////////////////////
-    /////  ITERATE OVER IMAGES
-    ////////////////////////////////////////////////////////////
-    
-    for (f = 0; f &lt; files.length; f++) {
+<span class='co'># set directories</span>
+<span class='va'>ddir</span> <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/file.path.html'>file.path</a></span><span class='op'>(</span><span class='st'>"Results"</span>, <span class='st'>"CNN"</span>, <span class='st'>"1.2 - State Partition"</span><span class='op'>)</span>
+<span class='va'>dir4</span> <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/file.path.html'>file.path</a></span><span class='op'>(</span><span class='st'>"Results"</span>, <span class='st'>"4 - Spectral Clustering"</span><span class='op'>)</span>
+<span class='va'>dir7</span> <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/file.path.html'>file.path</a></span><span class='op'>(</span><span class='st'>"Results"</span>, <span class='st'>"7 - Gradient Boosting Machines"</span>, <span class='st'>"State"</span><span class='op'>)</span>
 
-        open(input + files[f]);
-        Roi.remove; // remove active selection, if any
-    
-        ////////////////////////////////////////////////////////////
-        /////  LOAD IMAGE + DEFINE MARKERS
-        ////////////////////////////////////////////////////////////
-        
-        image = getTitle(); // get crop title
-        selectImage(image); // shift focus to the selected crop
-        filename = substring(image, 0, indexOf(image, &quot;_Reordered.tif&quot;));
-        
-        splitname = split(filename, &quot;_&quot;);   
-        sample = splitname[0];
-        layer = splitname[1];
-        crop = splitname[2];
-        crop = substring(crop, 4);
-        
-        if (sample == &quot;1190&quot; || sample == &quot;1301&quot; || sample == &quot;1619&quot; || sample == &quot;2169&quot; || sample == &quot;2191&quot; || sample == &quot;2250&quot; || sample == &quot;2274&quot;) {
-            condition = &quot;CTRL&quot;;
-        } else {
-            condition = &quot;AD&quot;;
-        }
-        
-        print(filename);
+<span class='co'># create directory</span>
+<span class='kw'>if</span><span class='op'>(</span><span class='op'>!</span><span class='fu'><a href='https://rdrr.io/r/base/files2.html'>dir.exists</a></span><span class='op'>(</span><span class='va'>dir7</span><span class='op'>)</span><span class='op'>)</span> <span class='op'>{</span><span class='fu'><a href='https://rdrr.io/r/base/files2.html'>dir.create</a></span><span class='op'>(</span><span class='va'>dir7</span><span class='op'>)</span><span class='op'>}</span>
 
-        ////////////////////////////////////////////////////////////
-        /////  RANDOMIZE CROP
-        ////////////////////////////////////////////////////////////
+<span class='co'># set seed</span>
+<span class='fu'><a href='https://rdrr.io/r/base/Random.html'>set.seed</a></span><span class='op'>(</span><span class='fl'>1234</span><span class='op'>)</span>
+</code></pre>
+</div>
+</div>
+<h1 id="load-data">Load Data</h1>
+<p>Load processed ROI measurement data from the <code>4 - Spectral Clustering</code> directory. <strong>Note that this script uses the same train/test/validation split as the convolutional neural network (CNN) by loading the data object created by the <code>CNN/1 - Partition ROIs</code> script.</strong></p>
+<div class="layout-chunk" data-layout="l-body">
+<div class="sourceCode">
+<pre class="sourceCode r"><code class="sourceCode r"><span class='va'>all</span> <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/readRDS.html'>readRDS</a></span><span class='op'>(</span><span class='fu'><a href='https://rdrr.io/r/base/file.path.html'>file.path</a></span><span class='op'>(</span><span class='va'>dir4</span>, <span class='st'>"Z-Score Data.rds"</span><span class='op'>)</span><span class='op'>)</span>
+<span class='va'>split</span> <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/readRDS.html'>readRDS</a></span><span class='op'>(</span><span class='fu'><a href='https://rdrr.io/r/base/file.path.html'>file.path</a></span><span class='op'>(</span><span class='va'>ddir</span>, <span class='st'>"ROI Partition by State.rds"</span><span class='op'>)</span><span class='op'>)</span>
+</code></pre>
+</div>
+</div>
+<h1 id="merge-data">Merge Data</h1>
+<p>Define function to merge ROI measurement data with the predetermined train/test/validation split.</p>
+<div class="layout-chunk" data-layout="l-body">
+<div class="sourceCode">
+<pre class="sourceCode r"><code class="sourceCode r"><span class='co'># function to parse and merge data</span>
+<span class='va'>merge_data</span> <span class='op'>=</span> <span class='kw'>function</span><span class='op'>(</span><span class='va'>allx</span>, <span class='va'>splitx</span><span class='op'>)</span> <span class='op'>{</span>
+  
+  <span class='co'># parse split data</span>
+  <span class='va'>splitx</span> <span class='op'>=</span> <span class='va'>splitx</span> <span class='op'>%&gt;%</span>
+    <span class='va'>.</span><span class='op'>[</span>, <span class='va'>ID</span> <span class='op'>:=</span> <span class='fu'><a href='https://rdrr.io/r/base/grep.html'>gsub</a></span><span class='op'>(</span><span class='st'>"(\\.tif|AD_|CTRL_)"</span>, <span class='st'>""</span>, <span class='va'>Name</span><span class='op'>)</span><span class='op'>]</span> <span class='op'>%&gt;%</span>
+    <span class='va'>.</span><span class='op'>[</span>, <span class='fu'>.</span><span class='op'>(</span><span class='va'>ID</span>, <span class='va'>Partition</span><span class='op'>)</span><span class='op'>]</span>
 
-        id = randomString(6, &quot;0123456789abcdefghijklmnopqrstuvwxyz&quot;);
-        // print(id);
+  <span class='co'># merge data</span>
+  <span class='va'>allx</span> <span class='op'>=</span> <span class='fu'><a href='https://Rdatatable.gitlab.io/data.table/reference/merge.html'>merge</a></span><span class='op'>(</span><span class='va'>allx</span>, <span class='va'>splitx</span>, by <span class='op'>=</span> <span class='st'>"ID"</span>, all.x <span class='op'>=</span> <span class='cn'>TRUE</span>, all.y <span class='op'>=</span> <span class='cn'>FALSE</span><span class='op'>)</span>
+  <span class='kw'><a href='https://rdrr.io/r/base/function.html'>return</a></span><span class='op'>(</span><span class='va'>allx</span><span class='op'>)</span>
+  
+<span class='op'>}</span>
+</code></pre>
+</div>
+</div>
+<p>Map function over data objects for cell-types with CNN output data.</p>
+<div class="layout-chunk" data-layout="l-body">
+<div class="sourceCode">
+<pre class="sourceCode r"><code class="sourceCode r"><span class='co'># function to parse and merge data</span>
+<span class='va'>all</span> <span class='op'>=</span> <span class='fu'><a href='https://purrr.tidyverse.org/reference/map.html'>map</a></span><span class='op'>(</span><span class='va'>celltypes</span>, <span class='op'>~</span><span class='fu'>merge_data</span><span class='op'>(</span><span class='va'>all</span><span class='op'>[[</span><span class='va'>.x</span><span class='op'>]</span><span class='op'>]</span>, <span class='va'>split</span><span class='op'>[[</span><span class='va'>.x</span><span class='op'>]</span><span class='op'>]</span><span class='op'>)</span><span class='op'>)</span>
+</code></pre>
+</div>
+</div>
+<h1 id="train-gbm-model">Train GBM Model</h1>
+<p>Define function to plot variable importance scores.</p>
+<div class="layout-chunk" data-layout="l-body">
+<div class="sourceCode">
+<pre class="sourceCode r"><code class="sourceCode r"><span class='co'># function to plot variable importance</span>
+<span class='va'>plot_imp</span> <span class='op'>=</span> <span class='kw'>function</span><span class='op'>(</span><span class='va'>imp</span><span class='op'>)</span> <span class='op'>{</span>
+  
+  <span class='co'># convert to data table</span>
+  <span class='va'>imp</span> <span class='op'>=</span> <span class='fu'><a href='https://Rdatatable.gitlab.io/data.table/reference/as.data.table.html'>as.data.table</a></span><span class='op'>(</span><span class='va'>imp</span><span class='op'>$</span><span class='va'>importance</span>, keep.rownames <span class='op'>=</span> <span class='st'>"Marker"</span><span class='op'>)</span> <span class='op'>%&gt;%</span>
+    <span class='fu'><a href='https://Rdatatable.gitlab.io/data.table/reference/setattr.html'>setnames</a></span><span class='op'>(</span><span class='st'>"Overall"</span>, <span class='st'>"Importance"</span><span class='op'>)</span> <span class='op'>%&gt;%</span>
+    <span class='va'>.</span><span class='op'>[</span><span class='fu'><a href='https://Rdatatable.gitlab.io/data.table/reference/setorder.html'>order</a></span><span class='op'>(</span><span class='op'>-</span><span class='va'>Importance</span><span class='op'>)</span><span class='op'>]</span> <span class='op'>%&gt;%</span>
+    <span class='va'>.</span><span class='op'>[</span>, <span class='va'>Marker</span> <span class='op'>:=</span> <span class='fu'><a href='https://rdrr.io/r/base/factor.html'>factor</a></span><span class='op'>(</span><span class='va'>Marker</span>, levels <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/rev.html'>rev</a></span><span class='op'>(</span><span class='va'>Marker</span><span class='op'>)</span><span class='op'>)</span><span class='op'>]</span>
+  
+  <span class='co'># plot variable importance</span>
+  <span class='va'>p</span> <span class='op'>=</span> <span class='fu'><a href='https://ggplot2.tidyverse.org/reference/ggplot.html'>ggplot</a></span><span class='op'>(</span><span class='va'>imp</span>, <span class='fu'><a href='https://ggplot2.tidyverse.org/reference/aes.html'>aes</a></span><span class='op'>(</span>x <span class='op'>=</span> <span class='va'>Importance</span>, y <span class='op'>=</span> <span class='va'>Marker</span>, fill <span class='op'>=</span> <span class='va'>Importance</span>,
+                      label <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/Round.html'>round</a></span><span class='op'>(</span><span class='va'>Importance</span>, <span class='fl'>2</span><span class='op'>)</span><span class='op'>)</span><span class='op'>)</span> <span class='op'>+</span>
+    <span class='fu'><a href='https://ggplot2.tidyverse.org/reference/geom_bar.html'>geom_bar</a></span><span class='op'>(</span>stat <span class='op'>=</span> <span class='st'>"identity"</span>, width <span class='op'>=</span> <span class='fl'>0.7</span>, color <span class='op'>=</span> <span class='st'>"black"</span><span class='op'>)</span> <span class='op'>+</span>
+    <span class='fu'><a href='https://ggplot2.tidyverse.org/reference/scale_gradient.html'>scale_fill_gradient</a></span><span class='op'>(</span>low <span class='op'>=</span> <span class='st'>"#EADA86"</span>, high <span class='op'>=</span> <span class='st'>"#B67977"</span><span class='op'>)</span> <span class='op'>+</span>
+    <span class='fu'><a href='https://ggplot2.tidyverse.org/reference/geom_text.html'>geom_text</a></span><span class='op'>(</span>size <span class='op'>=</span> <span class='fl'>3</span>, hjust <span class='op'>=</span> <span class='fl'>1.2</span>, fontface <span class='op'>=</span> <span class='st'>"bold"</span><span class='op'>)</span><span class='op'>+</span>
+    <span class='fu'><a href='https://ggplot2.tidyverse.org/reference/scale_continuous.html'>scale_x_continuous</a></span><span class='op'>(</span>limits <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='op'>-</span><span class='fl'>0.4</span>, <span class='fu'><a href='https://rdrr.io/r/base/Extremes.html'>max</a></span><span class='op'>(</span><span class='va'>imp</span><span class='op'>$</span><span class='va'>Importance</span><span class='op'>)</span><span class='op'>)</span>, 
+                       expand <span class='op'>=</span> <span class='fu'><a href='https://ggplot2.tidyverse.org/reference/expansion.html'>expansion</a></span><span class='op'>(</span>mult <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='fl'>0</span>, <span class='fl'>0.05</span><span class='op'>)</span><span class='op'>)</span><span class='op'>)</span> <span class='op'>+</span>
+    <span class='fu'><a href='https://ggplot2.tidyverse.org/reference/ggtheme.html'>theme_bw</a></span><span class='op'>(</span><span class='op'>)</span> <span class='op'>+</span>
+    <span class='fu'><a href='https://ggplot2.tidyverse.org/reference/theme.html'>theme</a></span><span class='op'>(</span>plot.title <span class='op'>=</span> <span class='fu'><a href='https://ggplot2.tidyverse.org/reference/element.html'>element_text</a></span><span class='op'>(</span>size <span class='op'>=</span> <span class='fl'>16</span>, hjust <span class='op'>=</span> <span class='fl'>0.5</span>, face <span class='op'>=</span> <span class='st'>"bold"</span><span class='op'>)</span>,
+          axis.title.y <span class='op'>=</span> <span class='fu'><a href='https://ggplot2.tidyverse.org/reference/element.html'>element_blank</a></span><span class='op'>(</span><span class='op'>)</span>,
+          axis.text.y <span class='op'>=</span> <span class='fu'><a href='https://ggplot2.tidyverse.org/reference/element.html'>element_text</a></span><span class='op'>(</span>size <span class='op'>=</span> <span class='fl'>10</span>, color <span class='op'>=</span> <span class='st'>"black"</span><span class='op'>)</span>,
+          axis.title.x <span class='op'>=</span> <span class='fu'><a href='https://ggplot2.tidyverse.org/reference/element.html'>element_text</a></span><span class='op'>(</span>size <span class='op'>=</span> <span class='fl'>12</span>, face <span class='op'>=</span> <span class='st'>"bold"</span><span class='op'>)</span>,
+          axis.ticks.x <span class='op'>=</span> <span class='fu'><a href='https://ggplot2.tidyverse.org/reference/element.html'>element_line</a></span><span class='op'>(</span>color <span class='op'>=</span> <span class='st'>"black"</span><span class='op'>)</span>,
+          axis.ticks.y <span class='op'>=</span> <span class='fu'><a href='https://ggplot2.tidyverse.org/reference/element.html'>element_blank</a></span><span class='op'>(</span><span class='op'>)</span>,
+          panel.border <span class='op'>=</span> <span class='fu'><a href='https://ggplot2.tidyverse.org/reference/element.html'>element_rect</a></span><span class='op'>(</span>color <span class='op'>=</span> <span class='st'>"black"</span>, fill <span class='op'>=</span> <span class='cn'>NA</span>, size <span class='op'>=</span> <span class='fl'>1</span><span class='op'>)</span>,
+          legend.position <span class='op'>=</span> <span class='st'>"none"</span><span class='op'>)</span>
+  
+  <span class='kw'><a href='https://rdrr.io/r/base/function.html'>return</a></span><span class='op'>(</span><span class='va'>p</span><span class='op'>)</span>
+  
+<span class='op'>}</span>
+</code></pre>
+</div>
+</div>
+<p>Define function to train the gradient boosting machines (GBM) model and save output</p>
+<div class="layout-chunk" data-layout="l-body">
+<div class="sourceCode">
+<pre class="sourceCode r"><code class="sourceCode r"><span class='va'>train_gbm</span> <span class='op'>=</span> <span class='kw'>function</span><span class='op'>(</span><span class='va'>dat</span>, <span class='va'>lab</span>, <span class='va'>mx</span><span class='op'>)</span> <span class='op'>{</span>
+  
+  <span class='co'># create subdirectory if needed</span>
+  <span class='va'>wdir</span> <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/file.path.html'>file.path</a></span><span class='op'>(</span><span class='va'>dir7</span>, <span class='va'>lab</span><span class='op'>)</span>
+  <span class='kw'>if</span><span class='op'>(</span><span class='op'>!</span><span class='fu'><a href='https://rdrr.io/r/base/files2.html'>dir.exists</a></span><span class='op'>(</span><span class='va'>wdir</span><span class='op'>)</span><span class='op'>)</span> <span class='op'>{</span><span class='fu'><a href='https://rdrr.io/r/base/files2.html'>dir.create</a></span><span class='op'>(</span><span class='va'>wdir</span><span class='op'>)</span><span class='op'>}</span>
+  
+  <span class='co'># partition data into training/test</span>
+  <span class='va'>train_dat</span> <span class='op'>=</span>  <span class='va'>dat</span><span class='op'>[</span><span class='va'>Partition</span> <span class='op'>%in%</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='st'>"Train"</span>, <span class='st'>"Validation"</span><span class='op'>)</span>, <span class='op'>]</span>
+  <span class='va'>test_dat</span> <span class='op'>=</span> <span class='va'>dat</span><span class='op'>[</span><span class='va'>Partition</span> <span class='op'>==</span> <span class='st'>"Test"</span>, <span class='op'>]</span>
+  
+  <span class='co'># establish 10-fold cross validation to determine the out-of-sample error</span>
+  <span class='va'>tC</span> <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/pkg/caret/man/trainControl.html'>trainControl</a></span><span class='op'>(</span>method <span class='op'>=</span> <span class='st'>"cv"</span>, number <span class='op'>=</span> <span class='fl'>10</span>, savePredictions <span class='op'>=</span> <span class='cn'>TRUE</span>,
+                    classProbs <span class='op'>=</span> <span class='cn'>TRUE</span>, verboseIter <span class='op'>=</span> <span class='cn'>TRUE</span><span class='op'>)</span>
+  
+  <span class='co'># estimate pre-processing transformation (centering, scaling, remove zero</span>
+  <span class='co'># variance) from training data, apply to all data</span>
+  <span class='va'>normalize</span> <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/pkg/caret/man/preProcess.html'>preProcess</a></span><span class='op'>(</span><span class='va'>train_dat</span><span class='op'>[</span>, <span class='va'>..mx</span><span class='op'>]</span>,
+                         method <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='st'>"center"</span>, <span class='st'>"scale"</span>, <span class='st'>"zv"</span><span class='op'>)</span>, verbose <span class='op'>=</span> <span class='cn'>TRUE</span><span class='op'>)</span>
+  <span class='va'>train_dat</span><span class='op'>[</span>, <span class='op'>(</span><span class='va'>mx</span><span class='op'>)</span> <span class='op'>:=</span> <span class='fu'><a href='https://rdrr.io/r/stats/predict.html'>predict</a></span><span class='op'>(</span><span class='va'>normalize</span>, <span class='va'>train_dat</span><span class='op'>[</span>, <span class='va'>mx</span>, with <span class='op'>=</span> <span class='cn'>FALSE</span><span class='op'>]</span><span class='op'>)</span><span class='op'>]</span>
+  <span class='va'>test_dat</span><span class='op'>[</span>, <span class='op'>(</span><span class='va'>mx</span><span class='op'>)</span> <span class='op'>:=</span> <span class='fu'><a href='https://rdrr.io/r/stats/predict.html'>predict</a></span><span class='op'>(</span><span class='va'>normalize</span>, <span class='va'>test_dat</span><span class='op'>[</span>, <span class='va'>mx</span>, with <span class='op'>=</span> <span class='cn'>FALSE</span><span class='op'>]</span><span class='op'>)</span><span class='op'>]</span>
+  
+  <span class='co'># train model on training set (80%)</span>
+  <span class='va'>gbm_model</span> <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/pkg/caret/man/train.html'>train</a></span><span class='op'>(</span>x <span class='op'>=</span> <span class='va'>train_dat</span><span class='op'>[</span>, <span class='va'>..mx</span><span class='op'>]</span>, y <span class='op'>=</span> <span class='va'>train_dat</span><span class='op'>[</span>, <span class='va'>State</span><span class='op'>]</span>,
+                    method <span class='op'>=</span> <span class='st'>"gbm"</span>, trControl <span class='op'>=</span> <span class='va'>tC</span><span class='op'>)</span>
+  <span class='va'>gbm_imp</span> <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/pkg/caret/man/varImp.html'>varImp</a></span><span class='op'>(</span><span class='va'>gbm_model</span>, scale <span class='op'>=</span> <span class='cn'>FALSE</span><span class='op'>)</span>
+  
+  <span class='co'># plot variable importance</span>
+  <span class='fu'><a href='https://ggplot2.tidyverse.org/reference/ggsave.html'>ggsave</a></span><span class='op'>(</span><span class='fu'><a href='https://rdrr.io/r/base/file.path.html'>file.path</a></span><span class='op'>(</span><span class='va'>wdir</span>, <span class='st'>"Variable Importance.pdf"</span><span class='op'>)</span>, <span class='fu'>plot_imp</span><span class='op'>(</span><span class='va'>gbm_imp</span><span class='op'>)</span>,
+         width <span class='op'>=</span> <span class='fl'>8</span>, height <span class='op'>=</span> <span class='fl'>2.5</span> <span class='op'>+</span> <span class='fu'><a href='https://rdrr.io/r/base/length.html'>length</a></span><span class='op'>(</span><span class='va'>mx</span><span class='op'>)</span><span class='op'>/</span><span class='fl'>2</span><span class='op'>)</span>
+  
+  <span class='co'># test model on test set (20%)</span>
+  <span class='va'>gbm_pred</span> <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/stats/predict.html'>predict</a></span><span class='op'>(</span><span class='va'>gbm_model</span>, <span class='va'>test_dat</span><span class='op'>[</span>, <span class='va'>..mx</span><span class='op'>]</span><span class='op'>)</span>
+  <span class='va'>gbm_cm</span> <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/pkg/caret/man/confusionMatrix.html'>confusionMatrix</a></span><span class='op'>(</span><span class='va'>gbm_pred</span>, <span class='va'>test_dat</span><span class='op'>[</span>, <span class='va'>State</span><span class='op'>]</span><span class='op'>)</span>
+  <span class='va'>gbm_prob</span> <span class='op'>=</span> <span class='fu'><a href='https://Rdatatable.gitlab.io/data.table/reference/data.table.html'>data.table</a></span><span class='op'>(</span><span class='fu'><a href='https://rdrr.io/r/stats/predict.html'>predict</a></span><span class='op'>(</span><span class='va'>gbm_model</span>, <span class='va'>test_dat</span><span class='op'>[</span>, <span class='va'>..mx</span><span class='op'>]</span>, type <span class='op'>=</span> <span class='st'>"prob"</span><span class='op'>)</span>,
+                        <span class='va'>test_dat</span><span class='op'>[</span>, <span class='fu'>.</span><span class='op'>(</span><span class='va'>State</span><span class='op'>)</span><span class='op'>]</span><span class='op'>)</span>
+  
+  <span class='co'># write GBM probabilities to file</span>
+  <span class='fu'><a href='https://Rdatatable.gitlab.io/data.table/reference/fwrite.html'>fwrite</a></span><span class='op'>(</span><span class='va'>gbm_prob</span>, <span class='fu'><a href='https://rdrr.io/r/base/file.path.html'>file.path</a></span><span class='op'>(</span><span class='va'>wdir</span>, <span class='st'>"GBM Probabilities.csv"</span><span class='op'>)</span><span class='op'>)</span>
+  
+  <span class='co'># calculate multiclass AUC</span>
+  <span class='va'>roc_calc</span> <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/pkg/pROC/man/multiclass.html'>multiclass.roc</a></span><span class='op'>(</span>response <span class='op'>=</span> <span class='va'>gbm_prob</span><span class='op'>$</span><span class='va'>State</span>, predictor <span class='op'>=</span> <span class='va'>gbm_prob</span><span class='op'>[</span>, <span class='fu'>.</span><span class='op'>(</span><span class='va'>Homeostatic</span>, <span class='va'>Intermediate</span>, <span class='va'>Reactive</span><span class='op'>)</span><span class='op'>]</span><span class='op'>)</span>
+  
+  <span class='co'># define aes values</span>
+  <span class='va'>h_i</span> <span class='op'>=</span> <span class='fu'><a href='https://Rdatatable.gitlab.io/data.table/reference/copy.html'>copy</a></span><span class='op'>(</span><span class='va'>gbm_prob</span><span class='op'>)</span><span class='op'>[</span><span class='va'>State</span> <span class='op'>%in%</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='st'>"Homeostatic"</span>, <span class='st'>"Intermediate"</span><span class='op'>)</span><span class='op'>]</span><span class='op'>[</span>, <span class='va'>State</span> <span class='op'>:=</span> <span class='fu'><a href='https://rdrr.io/r/base/droplevels.html'>droplevels</a></span><span class='op'>(</span><span class='va'>State</span><span class='op'>)</span><span class='op'>]</span>
+  <span class='va'>h_r</span> <span class='op'>=</span> <span class='fu'><a href='https://Rdatatable.gitlab.io/data.table/reference/copy.html'>copy</a></span><span class='op'>(</span><span class='va'>gbm_prob</span><span class='op'>)</span><span class='op'>[</span><span class='va'>State</span> <span class='op'>%in%</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='st'>"Homeostatic"</span>, <span class='st'>"Reactive"</span><span class='op'>)</span><span class='op'>]</span><span class='op'>[</span>, <span class='va'>State</span> <span class='op'>:=</span> <span class='fu'><a href='https://rdrr.io/r/base/droplevels.html'>droplevels</a></span><span class='op'>(</span><span class='va'>State</span><span class='op'>)</span><span class='op'>]</span>
+  <span class='va'>i_r</span> <span class='op'>=</span> <span class='fu'><a href='https://Rdatatable.gitlab.io/data.table/reference/copy.html'>copy</a></span><span class='op'>(</span><span class='va'>gbm_prob</span><span class='op'>)</span><span class='op'>[</span><span class='va'>State</span> <span class='op'>%in%</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='st'>"Intermediate"</span>, <span class='st'>"Reactive"</span><span class='op'>)</span><span class='op'>]</span><span class='op'>[</span>, <span class='va'>State</span> <span class='op'>:=</span> <span class='fu'><a href='https://rdrr.io/r/base/droplevels.html'>droplevels</a></span><span class='op'>(</span><span class='va'>State</span><span class='op'>)</span><span class='op'>]</span>
+  
+  <span class='co'># plot multiclass AUC curve</span>
+  <span class='va'>roc_plot</span> <span class='op'>=</span> <span class='fu'><a href='https://ggplot2.tidyverse.org/reference/ggplot.html'>ggplot</a></span><span class='op'>(</span><span class='op'>)</span> <span class='op'>+</span>
+    <span class='fu'><a href='https://ggplot2.tidyverse.org/reference/labs.html'>ggtitle</a></span><span class='op'>(</span><span class='st'>"Gradient Boosting Machines ROC"</span><span class='op'>)</span> <span class='op'>+</span>
+    <span class='fu'><a href='https://ggplot2.tidyverse.org/reference/geom_abline.html'>geom_abline</a></span><span class='op'>(</span><span class='fu'><a href='https://ggplot2.tidyverse.org/reference/aes.html'>aes</a></span><span class='op'>(</span>intercept <span class='op'>=</span> <span class='fl'>0</span>, slope <span class='op'>=</span> <span class='fl'>1</span><span class='op'>)</span>, linetype <span class='op'>=</span> <span class='st'>"dashed"</span>, size <span class='op'>=</span> <span class='fl'>1</span>, color <span class='op'>=</span> <span class='st'>"gray"</span><span class='op'>)</span> <span class='op'>+</span>
+    <span class='fu'><a href='https://rdrr.io/pkg/plotROC/man/geom_roc.html'>geom_roc</a></span><span class='op'>(</span>data <span class='op'>=</span> <span class='va'>h_i</span>, <span class='fu'><a href='https://ggplot2.tidyverse.org/reference/aes.html'>aes</a></span><span class='op'>(</span>d <span class='op'>=</span> <span class='va'>State</span>, m <span class='op'>=</span> <span class='va'>Intermediate</span>, color <span class='op'>=</span> <span class='st'>"Homeostatic/Intermediate"</span><span class='op'>)</span>, labels <span class='op'>=</span> <span class='cn'>FALSE</span>, pointsize <span class='op'>=</span> <span class='fl'>0</span><span class='op'>)</span> <span class='op'>+</span>
+    <span class='fu'><a href='https://rdrr.io/pkg/plotROC/man/geom_roc.html'>geom_roc</a></span><span class='op'>(</span>data <span class='op'>=</span> <span class='va'>i_r</span>, <span class='fu'><a href='https://ggplot2.tidyverse.org/reference/aes.html'>aes</a></span><span class='op'>(</span>d <span class='op'>=</span> <span class='va'>State</span>, m <span class='op'>=</span> <span class='va'>Reactive</span>, color <span class='op'>=</span> <span class='st'>"Intermediate/Reactive"</span><span class='op'>)</span>, labels <span class='op'>=</span> <span class='cn'>FALSE</span>, pointsize <span class='op'>=</span> <span class='fl'>0</span><span class='op'>)</span> <span class='op'>+</span>
+    <span class='fu'><a href='https://rdrr.io/pkg/plotROC/man/geom_roc.html'>geom_roc</a></span><span class='op'>(</span>data <span class='op'>=</span> <span class='va'>h_r</span>, <span class='fu'><a href='https://ggplot2.tidyverse.org/reference/aes.html'>aes</a></span><span class='op'>(</span>d <span class='op'>=</span> <span class='va'>State</span>, m <span class='op'>=</span> <span class='va'>Reactive</span>, color <span class='op'>=</span> <span class='st'>"Reactive/Homeostatic"</span><span class='op'>)</span>, labels <span class='op'>=</span> <span class='cn'>FALSE</span>, pointsize <span class='op'>=</span> <span class='fl'>0</span><span class='op'>)</span> <span class='op'>+</span>
+    <span class='fu'><a href='https://ggplot2.tidyverse.org/reference/scale_manual.html'>scale_colour_manual</a></span><span class='op'>(</span>values <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='st'>"#39B200"</span>, <span class='st'>"#F0C808"</span>, <span class='st'>"#960200"</span><span class='op'>)</span><span class='op'>)</span> <span class='op'>+</span>
+    <span class='fu'><a href='https://ggplot2.tidyverse.org/reference/labs.html'>labs</a></span><span class='op'>(</span>x <span class='op'>=</span> <span class='st'>"1 - Specificity"</span>, y <span class='op'>=</span> <span class='st'>"Sensitivity"</span>, color <span class='op'>=</span> <span class='st'>"Comparison"</span>, subtitle <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/paste.html'>paste</a></span><span class='op'>(</span><span class='st'>"Multi-Class AUC ="</span>, <span class='fu'><a href='https://rdrr.io/r/base/Round.html'>round</a></span><span class='op'>(</span><span class='fu'><a href='https://rdrr.io/r/base/numeric.html'>as.numeric</a></span><span class='op'>(</span><span class='va'>roc_calc</span><span class='op'>$</span><span class='va'>auc</span><span class='op'>)</span>, <span class='fl'>4</span><span class='op'>)</span><span class='op'>)</span><span class='op'>)</span> <span class='op'>+</span> <span class='fu'><a href='https://ggplot2.tidyverse.org/reference/ggtheme.html'>theme_bw</a></span><span class='op'>(</span><span class='op'>)</span> <span class='op'>+</span>
+    <span class='fu'><a href='https://ggplot2.tidyverse.org/reference/theme.html'>theme</a></span><span class='op'>(</span>plot.title <span class='op'>=</span> <span class='fu'><a href='https://ggplot2.tidyverse.org/reference/element.html'>element_text</a></span><span class='op'>(</span>size <span class='op'>=</span> <span class='fl'>16</span>, face <span class='op'>=</span> <span class='st'>"bold"</span><span class='op'>)</span>,
+          plot.subtitle <span class='op'>=</span> <span class='fu'><a href='https://ggplot2.tidyverse.org/reference/element.html'>element_text</a></span><span class='op'>(</span>face <span class='op'>=</span> <span class='st'>"italic"</span><span class='op'>)</span>,
+          axis.title.x <span class='op'>=</span> <span class='fu'><a href='https://ggplot2.tidyverse.org/reference/element.html'>element_text</a></span><span class='op'>(</span>size<span class='op'>=</span><span class='fl'>14</span>, face<span class='op'>=</span><span class='st'>"bold"</span><span class='op'>)</span>,
+          axis.title.y <span class='op'>=</span> <span class='fu'><a href='https://ggplot2.tidyverse.org/reference/element.html'>element_text</a></span><span class='op'>(</span>size<span class='op'>=</span><span class='fl'>14</span>, face<span class='op'>=</span><span class='st'>"bold"</span><span class='op'>)</span>,
+          legend.title <span class='op'>=</span> <span class='fu'><a href='https://ggplot2.tidyverse.org/reference/element.html'>element_text</a></span><span class='op'>(</span>size<span class='op'>=</span><span class='fl'>12</span>, face<span class='op'>=</span><span class='st'>"bold"</span><span class='op'>)</span>,
+          legend.text <span class='op'>=</span> <span class='fu'><a href='https://ggplot2.tidyverse.org/reference/element.html'>element_text</a></span><span class='op'>(</span>size<span class='op'>=</span><span class='fl'>12</span><span class='op'>)</span>,
+          legend.position <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='fl'>0.72</span>, <span class='fl'>0.17</span><span class='op'>)</span>,
+          legend.background <span class='op'>=</span> <span class='fu'><a href='https://ggplot2.tidyverse.org/reference/element.html'>element_rect</a></span><span class='op'>(</span>fill <span class='op'>=</span> <span class='st'>"white"</span>, color <span class='op'>=</span> <span class='st'>"black"</span><span class='op'>)</span>,
+          panel.border <span class='op'>=</span> <span class='fu'><a href='https://ggplot2.tidyverse.org/reference/element.html'>element_rect</a></span><span class='op'>(</span>color <span class='op'>=</span> <span class='st'>"black"</span>, fill <span class='op'>=</span> <span class='cn'>NA</span>, size <span class='op'>=</span> <span class='fl'>1</span><span class='op'>)</span><span class='op'>)</span>
+  
+  <span class='co'># save ROC curve</span>
+  <span class='fu'><a href='https://ggplot2.tidyverse.org/reference/ggsave.html'>ggsave</a></span><span class='op'>(</span><span class='fu'><a href='https://rdrr.io/r/base/file.path.html'>file.path</a></span><span class='op'>(</span><span class='va'>wdir</span>, <span class='st'>"Multi-Class ROC Curve.pdf"</span><span class='op'>)</span>, <span class='va'>roc_plot</span>, width <span class='op'>=</span> <span class='fl'>6</span>, height <span class='op'>=</span> <span class='fl'>6.2</span><span class='op'>)</span>
+  
+  <span class='co'># send output to external file</span>
+  <span class='va'>logf</span> <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/file.path.html'>file.path</a></span><span class='op'>(</span><span class='va'>wdir</span>, <span class='st'>"GBM Log.txt"</span><span class='op'>)</span>
+  <span class='kw'>if</span> <span class='op'>(</span><span class='fu'><a href='https://rdrr.io/r/base/files.html'>file.exists</a></span><span class='op'>(</span><span class='va'>logf</span><span class='op'>)</span><span class='op'>)</span> <span class='op'>{</span> <span class='fu'><a href='https://rdrr.io/r/base/files.html'>file.remove</a></span><span class='op'>(</span><span class='va'>logf</span><span class='op'>)</span> <span class='op'>}</span>
+  
+  <span class='co'># establish sink</span>
+  <span class='fu'><a href='https://rdrr.io/r/base/sink.html'>sink</a></span><span class='op'>(</span><span class='va'>logf</span><span class='op'>)</span>
+  <span class='va'>gbm_model</span> <span class='op'>%&gt;%</span>
+    <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span><span class='op'>(</span><span class='va'>.</span>, <span class='va'>.</span><span class='op'>$</span><span class='va'>results</span>, <span class='va'>.</span><span class='op'>$</span><span class='va'>finalModel</span>, <span class='va'>gbm_imp</span>,
+         <span class='fu'><a href='https://Rdatatable.gitlab.io/data.table/reference/as.matrix.html'>as.matrix</a></span><span class='op'>(</span><span class='va'>gbm_imp</span><span class='op'>$</span><span class='va'>importance</span><span class='op'>)</span>, <span class='va'>gbm_cm</span><span class='op'>)</span> <span class='op'>%&gt;%</span>
+    <span class='fu'><a href='https://purrr.tidyverse.org/reference/map.html'>walk</a></span><span class='op'>(</span><span class='va'>.</span>, <span class='va'>print</span><span class='op'>)</span>
+  <span class='fu'><a href='https://rdrr.io/r/base/cat.html'>cat</a></span><span class='op'>(</span><span class='fu'><a href='https://rdrr.io/r/base/paste.html'>paste0</a></span><span class='op'>(</span><span class='st'>"\nMulti-Class AUC = "</span>, <span class='fu'><a href='https://rdrr.io/r/base/Round.html'>round</a></span><span class='op'>(</span><span class='fu'><a href='https://rdrr.io/r/base/numeric.html'>as.numeric</a></span><span class='op'>(</span><span class='va'>roc_calc</span><span class='op'>$</span><span class='va'>auc</span><span class='op'>)</span>, <span class='fl'>4</span><span class='op'>)</span><span class='op'>)</span><span class='op'>)</span>
+  <span class='fu'><a href='https://rdrr.io/r/base/sink.html'>sink</a></span><span class='op'>(</span><span class='op'>)</span>
+  
+  <span class='co'># return full list of output</span>
+  <span class='kw'><a href='https://rdrr.io/r/base/function.html'>return</a></span><span class='op'>(</span><span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span><span class='op'>(</span>Test <span class='op'>=</span> <span class='va'>test_dat</span>, Train <span class='op'>=</span> <span class='va'>train_dat</span>, Model <span class='op'>=</span> <span class='va'>gbm_model</span>,
+              Prediction <span class='op'>=</span> <span class='va'>gbm_pred</span>, CM <span class='op'>=</span> <span class='va'>gbm_cm</span>, Scores <span class='op'>=</span> <span class='va'>gbm_prob</span>,
+              ROC <span class='op'>=</span> <span class='va'>roc_calc</span>, Importance <span class='op'>=</span> <span class='va'>gbm_imp</span><span class='op'>)</span><span class='op'>)</span>
+  
+<span class='op'>}</span>
+</code></pre>
+</div>
+</div>
+<h1 id="perform-machine-learning">Perform Machine Learning</h1>
+<p>Train the GBM model by mapping over <code>all</code>.</p>
+<div class="layout-chunk" data-layout="l-body">
+<div class="sourceCode">
+<pre class="sourceCode r"><code class="sourceCode r"><span class='co'># define markers of interest</span>
+<span class='va'>markers</span> <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span><span class='op'>(</span>Astrocyte <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='st'>"GFAP"</span>, <span class='st'>"YKL40"</span>, <span class='st'>"VIM"</span>, <span class='st'>"TSPO"</span>,
+                             <span class='st'>"EAAT1"</span>, <span class='st'>"EAAT2"</span>, <span class='st'>"GS"</span><span class='op'>)</span>,
+               Microglia <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='st'>"MHC2"</span>, <span class='st'>"CD68"</span>, <span class='st'>"TMEM119"</span>, <span class='st'>"TSPO"</span>, <span class='st'>"FTL"</span><span class='op'>)</span>,
+               Vessel <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='st'>"GFAP"</span>, <span class='st'>"YKL40"</span>, <span class='st'>"VIM"</span>, <span class='st'>"TSPO"</span>, <span class='st'>"EAAT1"</span>, <span class='st'>"EAAT2"</span>, <span class='st'>"GS"</span><span class='op'>)</span><span class='op'>)</span>
 
-        Table.set(&quot;ID&quot;, f, id);
-        Table.set(&quot;Sample&quot;, f, sample);
-        Table.set(&quot;Layer&quot;, f, layer);
-        Table.set(&quot;Crop&quot;, f, crop);
-        Table.set(&quot;Condition&quot;, f, condition);
-        Table.set(&quot;File&quot;, f, filename);
-        Table.update();
-    
-        ////////////////////////////////////////////////////////////
-        /////  SAVE IBA1 CHANNEL
-        ////////////////////////////////////////////////////////////
-        
-        // duplicate IBA1 channel
-        selectImage(image); // shift focus to original
-        run(&quot;Duplicate...&quot;, &quot;title=IBA1 duplicate channels=3&quot;);
+<span class='co'># train GBM model</span>
+<span class='va'>gbm_results</span> <span class='op'>=</span> <span class='fu'><a href='https://purrr.tidyverse.org/reference/imap.html'>imap</a></span><span class='op'>(</span><span class='va'>all</span>, <span class='op'>~</span><span class='fu'>train_gbm</span><span class='op'>(</span><span class='va'>.x</span>, <span class='va'>.y</span>, <span class='va'>markers</span><span class='op'>[[</span><span class='va'>.y</span><span class='op'>]</span><span class='op'>]</span><span class='op'>)</span><span class='op'>)</span>
 
-        run(&quot;Enhance Contrast...&quot;, &quot;saturated=0.1&quot;); // only for visualization purposes
-        
-        selectWindow(&quot;IBA1&quot;); // shift focus to original
-        saveAs(&quot;Png&quot;, datadir + condition + &quot;/&quot; + id + &quot;.png&quot;);
-        close();
-
-        selectImage(image);
-        close();
-    
-    }
-
-    // save table with mappings
-    Table.save(datadir + &quot;ID Mappings.csv&quot;)
-
-}</code></pre>
-<div class="sourceCode" id="cb2"><pre class="sourceCode r distill-force-highlighting-css"><code class="sourceCode r"></code></pre></div>
+<span class='co'># save output</span>
+<span class='fu'><a href='https://rdrr.io/r/base/readRDS.html'>saveRDS</a></span><span class='op'>(</span><span class='va'>gbm_results</span>, <span class='fu'><a href='https://rdrr.io/r/base/file.path.html'>file.path</a></span><span class='op'>(</span><span class='va'>dir7</span>, <span class='st'>"GBM Results.rds"</span><span class='op'>)</span><span class='op'>)</span>
+</code></pre>
+</div>
+</div>
+<div class="sourceCode" id="cb1"><pre class="sourceCode r distill-force-highlighting-css"><code class="sourceCode r"></code></pre></div>
 <!--radix_placeholder_article_footer-->
 <!--/radix_placeholder_article_footer-->
 </div>

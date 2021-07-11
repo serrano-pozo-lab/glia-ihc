@@ -1,0 +1,265 @@
+---
+title: "Spectral Clustering"
+description: |
+ This R script performs unsupervised spectral clustering to investigate the existence of diverse phenotypes of astrocytes and microglia in Alzheimer's.
+output:
+  distill::distill_article:
+    toc: true
+---
+
+knitr::opts_chunk\$set(eval = FALSE)
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(eval = FALSE)
+```
+
+# Dependencies
+
+Load requisite packages and define directories. Note that this script uses my personal utilities package `brainstorm`, which can be downloaded via `devtools::install_github("ayushnoori/brainstorm")`.
+
+```{r load-packages, message=FALSE, warning=FALSE}
+
+# data manipulation
+library(data.table)
+library(purrr)
+library(magrittr)
+
+# spectral clustering
+library(stringr)
+library(SNFtool)
+
+# heatmap
+library(pheatmap)
+library(ggplot2)
+library(RColorBrewer)
+
+# utility functions
+library(brainstorm)
+
+```
+
+Note that directories are relative to the R project path.
+
+```{r define-directores}
+
+# set directories
+dir3 = file.path("Results", "3 - ROI Measurements")
+dir4 = file.path("Results", "4 - Spectral Clustering")
+
+```
+
+# Load Data
+
+Load ROI measurement data from the `3 - ROI Measurements` directory and split by `Group`.
+
+```{r load-data}
+
+all = fread(file.path(dir3, "ROI Measurements.csv")) %>% split(.$Group)
+
+```
+
+# Define Clustering Functions
+
+Define functions to compute spectral clustering using the `SNFtool` package. Here, `affinityCustom` is a modified version of `affinityMatrix` from `SNFtool` without sparsifying the affinity matrix by a K-nearest neighbors approach (i.e., removing the assumption that local pairwise similarities with high values are more reliable than remote ones).
+
+```{r affinity-matrix, include = FALSE}
+
+affinityCustom = function (diff, sigma = 0.5) 
+{
+  N <- nrow(diff)
+  diff <- (diff + t(diff))/2
+  diag(diff) <- 0
+  sortedColumns <- as.matrix(t(apply(diff, 2, sort)))
+  finiteMean <- function(x) {
+    return(mean(x[is.finite(x)]))
+  }
+  # this line has been modified to remove [, 1:K + 1]
+  means <- apply(sortedColumns, 1, finiteMean) + 
+    .Machine$double.eps
+  avg <- function(x, y) {
+    return((x + y)/2)
+  }
+  Sig <- outer(means, means, avg)/3 * 2 + diff/3 + .Machine$double.eps
+  Sig[Sig <= .Machine$double.eps] <- .Machine$double.eps
+  densities <- dnorm(diff, 0, sigma * Sig, log = FALSE)
+  W <- (densities + t(densities))/2
+  return(W)
+}
+
+```
+
+Define spectral clustering function.
+
+```{r spectral-clustering}
+
+spectral_clustering = function(dat, lab, mx, k = 3) {
+  
+  # print log
+  cat(paste("\n", toupper(lab), "ANALYSIS\n"))
+  
+  # calculate distance matrix
+  distM = as.matrix(dat[, ..mx]) %>% dist2(., .) %>% .^(1/2)
+  
+  # calculate similarity matrix
+  simM = affinityCustom(distM)
+  
+  # perform spectral clustering
+  cat(paste0("- Performing Spectral Clustering, ", word(Sys.time(), 2), "\n"))
+  clust = spectralClustering(simM, K = k)
+  
+  # add spectral clustering labels to data
+  dat[, State := clust]
+  
+  return(dat)
+  
+}
+
+```
+
+Define function to bin distance, where `distlab` is a character vector specifying the name of the distance column of interest.
+
+```{r bin-distance}
+
+bin_distance = function(dat, distlab,
+                        distbins = c(0, 25, 50),
+                        distlevels = c("< 25 um", "25-50 um", "> 50 um"),
+                        distna = "None") {
+  
+  # bin distance labels
+  dat %>% 
+    .[, TemporaryBin := .SD, .SDcols = distlab] %>%
+    .[, TemporaryBin := cut(TemporaryBin,
+                        breaks = c(distbins, max(TemporaryBin, na.rm = T)),
+                        include.lowest = T)] %>%
+    .[, TemporaryBin := addNA(TemporaryBin)] %>%
+    .[, TemporaryBin := plyr::mapvalues(TemporaryBin, levels(TemporaryBin),
+                                    c(distlevels, "None"))]
+  
+  # group None with > 50 um
+  dat[TemporaryBin == "None", TemporaryBin := distna]
+  
+  # rename column
+  setnames(dat, "TemporaryBin", paste0(distlab, "Bin"))
+  
+  return(invisible(dat))
+  
+}
+
+```
+
+Define function to (a) prepare data for heatmap by refactoring label, reordering, and binning distance, then (b) plot the heatmap using the `pheatmap` package.
+
+```{r plot-heatmap}
+
+scale_data = function(b) { return(100*(b - min(b))/(max(b) - min(b))) }
+
+plot_heatmap = function(dat, lab, mx, hmcols, hmsel) {
+
+  # subset marker/metadata columns
+  dat = dat[, .SD, .SDcols = c(mx, hmsel)]
+  
+  # calculate proportion of control ROIs by state
+  prop = dat[, sum(Condition == "Control")/.N, by = .(State)] %>%
+    .[order(-V1), State]
+  
+  # convert to factor then reorder ROIs
+  dat = dat %>%
+    .[, State := factor(State, levels = prop, labels = c("Homeostatic", "Intermediate", "Reactive"))] %>%
+    # .[, State := factor(State)] %>%
+    .[, Sample := factor(Sample)] %>%
+    .[, Condition := factor(Condition, levels = c("Control", "Alzheimer"))] %>%
+    .[order(State, Condition, Layer, runif(nrow(.))), ]
+  
+  # calculate distances
+  dat = dat %>% bin_distance("Distance")
+  
+  # write file
+  setcolorder(dat, c("ID", "State"))
+  fwrite(dat, file.path(dir4, paste(lab, "Spectral Clustering.csv")))
+  
+  # calculate column gaps
+  gaps = cumsum(summary(dat[, State]))
+  
+  # prepare for heatmap
+  hmdat = dat[, ..mx] %>% map_dfc(~scale_data(.x)) %>% t()
+  
+  # select row names and column names
+  hmannos = dat[, .SD, .SDcols = c("Layer", "Condition", "State")]
+  
+  # group None with > 50
+  group_none = function(x) hmannos[get(x) == "None", c(x) := "> 50 um"]
+  walk(hmdists, group_none)
+  
+  # remove "Bin" label
+  colnames(hmannos) = gsub("Bin", "", colnames(hmannos), fixed = T)
+  
+  # set rownames and colnames
+  colnames(hmdat) = dat$ID; rownames(hmannos) = dat$ID
+                    
+  # plot heatmap
+  hm = pheatmap(hmdat,
+                cluster_cols = FALSE, cluster_rows = FALSE,
+                annotation_colors = hmcols, annotation_col = hmannos,
+                border_color = NA, # main = paste(lab, "Heatmap"),
+                show_colnames = FALSE, gaps_col = gaps, silent = TRUE)
+  
+  ggsave(file.path(dir4, paste(lab, "Heatmap.pdf")), hm, width = 8, height = 6)
+  ggsave(file.path(dir4, paste(lab, "Heatmap.png")), hm, width = 8, height = 6, dpi = 1200)
+  
+  return(dat)
+
+}
+
+```
+
+# Perform Spectral Clustering
+
+Apply `spectral_clustering` function over ROI measurement data by `Type`.
+
+```{r perform-clustering}
+
+# define markers of interest
+markers = list(Astrocyte = c("GFAP", "YKL40", "VIM", "TSPO",
+                             "EAAT1", "EAAT2", "GS"),
+               Microglia = c("MHC2", "CD68", "TMEM119", "TSPO", "FTL"),
+               Vessel = c("GFAP", "YKL40", "VIM", "TSPO", "EAAT1", "EAAT2", "GS"))
+
+# comment out the below lines if you do NOT want to re-run spectral clustering
+
+# perform spectral clustering with k = 3 clusters
+all = imap(all, ~spectral_clustering(.x, .y, markers[[.y]], 4))
+
+# save spectral clustering result
+saveRDS(all, file.path(dir4, "Spectral Clustering.rds"))
+
+# read spectral clustering result
+# all = readRDS(file.path(dir4, "Spectral Clustering.rds"))
+
+```
+
+# Plot Heatmap
+
+Plot data as heatmaps.
+
+```{r create-heatmap}
+
+# define metadata of interest for output .csv file
+sel = colnames(all$Astrocyte) %>% .[!(. %in% c(unlist(markers), c("ALDH1L1", "Abeta", "DAPI", "HuC.D", "IBA1", "PHF1.tau")))]
+
+# define distance colors
+distcols = c('< 25 um' = "#FFAF85", '25-50 um' = "#FFED85", '> 50 um' = "#96BDD9")
+
+# define heatmap color palette
+cols = list(
+  Distance = distcols, 
+  Layer = c(II = "#DDF2B2", III = "#8DD2B9", IV = "#39AEC3", V = "#2072B1", VI = "#0C2C84"),
+  Condition = c(Control = "#377EB8", Alzheimer = "#CE6D8B"),
+  State = c('Homeostatic' = "#39B200", 'Intermediate' = "#F0C808", 'Reactive' = "#960200"))
+
+# plot heatmap data
+hm = imap(all, ~plot_heatmap(.x, .y, markers[[.y]], cols, sel))
+
+# save processed data
+saveRDS(hm, file.path(dir4, "Z-Score Data.rds"))
+
+```

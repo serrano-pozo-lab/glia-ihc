@@ -1,0 +1,683 @@
+---
+title: "Data Visualization"
+description: |
+ This R script creates several plots to visualize the data. Mixed effects regression models are also applied.
+output:
+  distill::distill_article:
+    toc: true
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(eval = FALSE)
+```
+
+# Dependencies
+
+Load requisite packages and define directories.
+
+```{r load-packages, message=FALSE, warning=FALSE}
+
+# data manipulation
+library(data.table)
+library(purrr)
+library(magrittr)
+
+# data visualization
+library(ggplot2)
+library(ggpubr)
+
+# mixed effects model
+library(lmerTest)
+library(openxlsx)
+
+# utility functions
+library(brainstorm)
+
+```
+
+Note that directories are relative to the R project path.
+
+```{r define-directores}
+
+# set directories
+dir4 = file.path("Results", "4 - Spectral Clustering")
+dir6 = file.path("Results", "6 - Data Visualization")
+
+```
+
+# Load Data
+
+Load processed ROI measurement data from the `4 - Spectral Clustering` directory.
+
+```{r load-data}
+
+all = readRDS(file.path(dir4, "Z-Score Data.rds"))
+
+```
+
+# Define Plotting Functions
+
+Define variables which contain theme options.
+
+```{r set-themes}
+
+# define theme options
+marker_theme = theme(
+  plot.title = element_text(size = 16, hjust = 0.5, face = "bold.italic"),
+  
+  # axes
+  axis.title.y = element_text(size = 12, face = "bold"),
+  axis.title.x = element_blank(),
+  axis.text.x = element_text(size = 12, face = "bold", color = "black"),
+  axis.ticks.x = element_blank(),
+  
+  # panel
+  panel.background = element_rect(fill = "#EBEBEB"),
+  panel.border = element_rect(colour = "black", fill = NA, size = 0.8),
+  panel.grid = element_blank(),
+  
+  # legend
+  legend.title = element_text(size = 14, face = "bold"),
+  legend.text = element_text(size = 12),
+  legend.position = "bottom")
+
+
+# modify theme for proportions
+prop_theme = marker_theme + theme(
+  legend.position = "right",
+  plot.title = element_text(size = 16, hjust = 0.5, face = "bold"),
+  legend.text = element_text(size = 10, face = "plain"),
+  panel.grid.major.y = element_line(size = 0.4, color = "#333333"),
+  strip.text = element_text(size = 12, face = "bold", color = "white"),
+  strip.background = element_rect(color = "black", fill = "#3D3D3D",
+                                  size = 0.8, linetype = "solid"))
+
+# modify theme for bar graph
+bg_theme = prop_theme + theme(
+  panel.grid.major.y = element_line(size = 0.2, color = "#333333"),
+  panel.grid.minor.y = element_line(size = 0.2, color = "#333333"))
+
+
+# modify theme for histogram
+hist_theme = prop_theme + theme(
+  axis.text.x = element_text(size = 10, face = "plain", color = "black"),
+  axis.text.y = element_text(size = 10, face = "plain", color = "black"),
+  axis.ticks.x = element_line(size = 0.5, color = "black"),
+  axis.ticks.y = element_line(size = 0.5, color = "black"))
+
+
+# modify theme for density
+density_theme = hist_theme
+
+```
+
+Define plotting functions to visualize data by marker, state, and layer.
+
+```{r boxplot-functions}
+
+# create boxplots for each marker
+plot_marker = function(dat, mx, grp, grpcol, legend = FALSE,
+                       fname = NULL, facet = NULL) {
+  
+  # base plot
+  marker_plot = ggplot(dat, aes(x = get(grp), y = get(mx), color = get(grp))) +
+    geom_boxplot() +
+    scale_color_manual(grp, values = levels(dat[[grpcol]])) + 
+    ggtitle(mx) +
+    labs(x = grp, y = "Mean Gray Intensity (MGI)")
+  
+  # split by layer and assign appropriate theme
+  if(!is.null(facet)) {
+    marker_plot = marker_plot +
+      facet_wrap(. ~ Layer, nrow = 1,
+                 labeller = function(x) return(map(x, ~paste("Layer", .x)))) +
+      prop_theme + theme(plot.title = element_text(size = 16, hjust = 0.5,
+                                                   face = "bold.italic"))
+  } else {
+    marker_plot = marker_plot + marker_theme
+  }
+  
+  # plot legend
+  if(!legend) { marker_plot = marker_plot + theme(legend.position = "none") }
+  
+  # save file
+  if(!is.null(fname)) { ggsave(paste0(fname, ".pdf"), marker_plot, width = 4, height = 6) }
+  
+  # return modified plot
+  return(marker_plot + theme(axis.text.x = element_blank(), plot.margin = margin(0.5, 0.5, 0.5, 0.5, "cm")))
+  
+}
+
+# shared y-axis
+shared_y = function(p, idx, nwidth) {if((idx - 1) %% nwidth == 0) return(p) else return(p + rremove("ylab"))}
+
+# arrange plots
+arrange_plots = function(plist, leg, lab, grplab, nwidth = ceiling(length(plist)/2), nheight = ceiling(length(plist)/nwidth), title = TRUE) {
+  
+  # create shared y-axis per row
+  plist = imap(plist, ~shared_y(.x, .y, nwidth))
+  
+  # join plots together
+  composite = ggarrange(plotlist = plist, ncol = nwidth, nrow = nheight, legend.grob = leg, legend = "bottom")
+  
+  # add title
+  if(title) { composite = annotate_figure(composite, top = text_grob(paste(lab, "Marker Expression by", grplab), size = 20, face = "bold")) }
+  
+  # return composite
+  return(composite)
+  
+}
+
+```
+
+Plot stacked boxplots where ROIs are split by Control/Alzheimer, then grouped by stratified Distance, Layer, or some other grouping variable. Relative proportions within each group are visualized.
+
+```{r proportion-functions}
+
+plot_prop = function(dat, grpvar, grpcol, lab, fname = NULL) {
+  
+  grpcols = c(grpvar, "Condition", "State", grpcol)
+  
+  # group by grouping variable
+  prop = dat %>%
+    .[, .N, by = grpcols] %>%
+    .[order(.[, ..grpcols]), ] %>%
+    .[, Proportion := map(.(N), ~.x*100/sum(N)), by = c(grpvar, "Condition")] %>%
+    .[, Label := paste0(round(Proportion, 1), "%")]
+  
+  if(grpvar == "Layer") { prop[, Layer := paste("Layer", Layer)] }
+  
+  # plot proportions data
+  prop_plot = ggplot(prop, aes(x = get(grpvar), y = Proportion,
+                               fill = State, label = Label)) +
+    geom_bar(position = "stack", stat = "identity", width = 0.5,
+             color = "black", size = 0.4) +
+    facet_grid(. ~ Condition) +
+    scale_fill_manual(grpvar, values = levels(prop[[grpcol]])) +
+    scale_y_continuous(expand = expansion(mult = c(0, 0))) +
+    geom_text(size = 3, position = position_stack(vjust = 0.5)) +
+    # ggtitle(paste(lab, "State Across", grpvar)) +
+    labs(x = gsub("Bin", "", grpvar), y = "Proportion", fill = "State") +
+    prop_theme
+  
+  if(!is.null(fname)) ggsave(paste0(fname, ".pdf"), prop_plot, width = 14, height = 6) else return(prop_plot)
+  
+}
+
+```
+
+Plot bargraph where ROIs are split by Control/Alzheimer, then grouped by stratified Distance, Layer, or some other grouping variable. Relative proportions within each phenotypic state are visualized (or, phenotypic state within the grouping variable; i.e., x-axis can be phenotypic state or other grouping variable).
+
+```{r bargraph-functions}
+
+plot_bg = function(dat, grpvar, grpcol, lab, fname = NULL, xvar = "State") {
+  
+  grpcols = c("Condition", xvar, grpvar, grpcol)
+  
+  # group by grouping variable
+  bg = dat %>%
+    .[, .N, by = grpcols] %>%
+    .[order(.[, ..grpcols]), ] %>%
+    .[, Proportion := map(.(N), ~.x*100/sum(N)), by = c("Condition")] %>%
+    .[, Label := paste0(round(Proportion, 1), "%")] %>%
+    .[, Fraction :=  map(.(N), ~paste0(.x, "/", sum(N))), by = c("Condition")]
+  
+  # plot proportions data
+  bg_plot = ggplot(bg, aes(x = get(xvar), y = Proportion,
+                           fill = get(grpvar), label = Fraction)) +
+    geom_bar(stat = "identity", position = position_dodge(0.6),
+             width = 0.4, color = "black", size = 0.4) +
+    facet_grid(. ~ Condition) +
+    scale_fill_manual(grpvar, values = levels(bg[[grpcol]])) + 
+    scale_y_continuous(expand = expansion(mult = c(0, .1))) +
+    geom_text(size = 2.5, position = position_dodge(0.6), vjust = -1.5) +
+    # ggtitle(paste(lab, grpvar, "Across State")) +
+    labs(x = gsub("Bin", "", xvar), y = "Proportion") +
+    bg_theme
+  
+  if(!is.null(fname)) ggsave(paste0(fname, ".pdf"), bg_plot, width = 14, height = 6) else return(bg_plot)
+  
+}
+
+```
+
+Define function to plot histogram of distance.
+
+```{r histogram-functions}
+
+# plot grouped density
+plot_density = function(dat, grpvar, grpcol, linecol, lab, maxlim) {
+  
+  density_plot = ggplot(dat, aes(x = get(grpvar), group = State)) +
+    geom_density(aes(fill = State), alpha = 0.5) +
+    scale_fill_manual(values = levels(dat[[grpcol]])) +
+    geom_density(color = "black", size = 0.3) +
+    # geom_density(aes(color = State)) +
+    # scale_color_manual(values = levels(dat[[linecol]])) +
+    labs(x = grpvar, y = "Density") +
+    scale_x_continuous(expand = c(0, 0), breaks = seq(0, 500, by = 50)) +
+    scale_y_continuous(expand = expansion(mult = c(0, 0.05))) +
+    density_theme + theme(legend.position = "none")
+  
+  return(density_plot)
+  
+}
+
+
+# plot individual histogram
+plot_hist = function(dat, grpvar, grpcol, lab, stateidx = 1:3, legend = F,
+                     bin_width = 20, t_d = NULL, max_x = 500, max_y = 1) {
+  
+  hist_plot = ggplot(dat, aes(x = get(grpvar), fill = State)) +
+    geom_histogram(
+      aes(y = ..count../t_d),
+      # aes(y = ..density..),
+      breaks = seq(0, max(dat[, ..grpvar] + bin_width), by = bin_width),
+      position = "identity", size = 0.3,
+      color = "black") +
+    scale_fill_manual(values = levels(dat[[grpcol]])[stateidx]) +
+    # geom_density(fill = "white", alpha = 0.2) +
+    labs(x = grpvar, y = "Proportion", fill = "State") +
+    scale_x_continuous(limits = c(0, max_x), expand = c(0.02, 0.02)) +
+    scale_y_continuous(limits = c(0, max_y), 
+                       expand = expansion(mult = c(0, 0.05))) +
+    facet_wrap(. ~ State, scales = "free_y") +
+    hist_theme + theme(legend.position = "bottom")
+  
+  if(legend) return(hist_plot) else return(hist_plot +
+                                             theme(legend.position = "none"))
+  
+}
+
+
+# get maximum y-value
+max_y = function(dat, bin_width, t_d, total_denominator = F) {
+  
+  if(total_denominator) t_d = t_d[State == dat[1, State], N]
+  
+  dat = dat[, !c("State")]
+  
+  maximum_y = dat %>%
+    { cut(.[[1]], breaks = seq(0, max(. + bin_width), by = bin_width),
+          include.lowest = T) } %>%
+    summary() %>% { ./t_d } %>% max() %>% return()
+  
+}
+
+
+# plot composite histograms
+plot_hists = function(my_dat, grpvar, grpcol, lab, fname = NULL,
+                      condvar = c("Control", "Alzheimer"),
+                      smplvar = NULL,
+                      bin_width = 25, total_denominator = F) {
+  
+  if(!is.null(smplvar)) my_dat = my_dat[Sample %in% smplvar]
+  
+  # should the denominator be ALL astrocytes within Condition?
+  og_total_denominator = nrow(my_dat[Condition %in% condvar])
+  
+  # should the denominator be TOTAL Homeostatic astrocytes for Homeostatic plot,
+  # TOTAL Intermediate astrocytes for Intermeidate plot, etc. (within Condition)
+  og_state_denominator = my_dat[Condition %in% condvar, .N, by = "State"]
+  
+  # REMOVE crops WITHOUT plaques (but keep whole denominator)
+  dat = copy(my_dat) %>%
+    .[is.na(get(grpvar)), c(grpvar) := 500] %>%
+    .[get(grpvar) > 500, c(grpvar) := 500] %>%
+    .[Condition %in% condvar]
+  
+  # create density plot
+  density_plot = plot_density(dat, grpvar, grpcol, "StateColors",
+                              lab, maxlim)
+  
+  # get maximum x-value
+  max_x = max(dat[, ..grpvar], na.rm = T)
+  
+  # create individual histograms
+  if(total_denominator) {
+    
+    # get maximum y-value
+    max_y = dat[, max_y(.SD, bin_width, og_total_denominator, F),
+                  .SDcols = c(grpvar, "State"), by = "State"][, max(V1)]
+    
+    # plot histogram
+    hist_plots = imap(levels(dat[, State]),
+                      ~plot_hist(dat[State == .x], grpvar, grpcol, lab,
+                                 stateidx = .y, bin_width = bin_width,
+                                 t_d = og_total_denominator,
+                                 max_x = max_x, max_y = max_y))
+  
+  } else  { 
+    
+    # get maximum value
+    max_y = dat[, max_y(.SD, bin_width, og_state_denominator, T),
+                  .SDcols = c(grpvar, "State"), by = "State"][, max(V1)]
+    
+    # plot histogram
+    hist_plots = imap(levels(dat[, State]),
+                      ~plot_hist(dat[State == .x], grpvar, grpcol, lab,
+                                 stateidx = .y, bin_width = bin_width,
+                                 t_d = og_state_denominator[State == .x, N],
+                                 max_x = max_x, max_y = max_y))
+  
+  }
+  
+  # get composite legend
+  hist_legend = get_legend(plot_hist(dat, grpvar, grpcol, lab, legend = T, t_d = nrow(dat)))
+  
+  # create composite histogram
+  comp_plot = arrange_plots(rev(hist_plots), hist_legend, nwidth = 3, title = F)
+  
+  # add density plot
+  comp_plot = ggarrange(density_plot, comp_plot, ncol = 1)
+  
+  # save or return plot
+  if(!is.null(fname)) ggsave(paste0(fname, ".pdf"), comp_plot, width = 10, height = 8) else return(comp_plot)
+  
+}
+
+```
+
+# Mixed Effects Models
+
+Function to run mixed effects regression models.
+
+```{r mixed-effects}
+
+mixed_effects = function(dat, my_formula, model_name,
+                         ldir = NULL, marker = "N/A") {
+  
+  # run mixed model
+  my_model = lmerTest::lmer(my_formula, REML = T, data = dat)
+  my_summary = summary(my_model)
+  my_confint = confint(my_model)
+  
+  # get model results
+  mcols = c("Marker", "Model", "Comparison", "Estimate", "Pr(>|t|)", "Std. Error")
+  
+  # model results
+  model_results = my_summary$coefficients %>%
+    as.data.table(keep.rownames = "Comparison") %>%
+    .[, Marker := ..marker] %>%
+    .[, Model := ..model_name] %>%
+    .[, .SD, .SDcols = mcols] %>%
+    merge(as.data.table(my_confint, keep.rownames = "Comparison"),
+          by = "Comparison")
+  
+  # write output
+  if(!is.null(ldir)) {
+    sink(file = ldir, append = T)
+    cat("\n", rep("_", 80), sep = "")
+    cat("\n\n\n>>>", toupper(model_name), "MODEL:\n\n"); print(my_model)
+    cat("\n\n>>> SUMMARY:\n\n"); print(my_summary)
+    cat("\n\n>>> CONFIDENCE INTERVALS:\n\n"); print(my_confint)
+    sink()
+  }
+  
+  # change names and set order
+  setnames(model_results, c("2.5 %", "97.5 %"), c("Lower CI", "Upper CI"))
+  setcolorder(model_results, c("Marker", "Model"))
+  return(model_results)
+  
+}
+
+# run multiple models per marker
+mixed_marker = function(marker, dat, mxdir) {
+  
+  # create file
+  ldir = file.path(mxdir, paste(marker, "Mixed Effects Model.txt"))
+  if(file.exists(ldir)) file.remove(ldir) else file.create(ldir)
+  
+  # log message
+  sink(file = ldir, append = T)
+  cat(">>> MARKER: ", marker, "\n", sep = "")
+  sink()
+  
+  # run model 1
+  m1 = mixed_effects(dat, get(marker) ~ State + (1|Sample), "State", ldir, marker)
+  m2 = mixed_effects(dat, get(marker) ~ Condition + (1|Sample), "Condition",
+                     ldir, marker)
+  
+  # final model results
+  mres = rbind(m1, m2)
+  
+  return(mres)
+  
+}
+
+```
+
+# Define Iteration Functions
+
+Define function to create plots.
+
+```{r plot-data}
+
+plot_data = function(dat, lab, mx, pcols, pwb) {
+  
+  # create subdirectory if needed
+  wdir = file.path(dir6, lab)
+  mxdir = file.path(wdir, "Mixed Effects Models")
+  hdir = file.path(wdir, "Distance Histograms")
+  bgdir = file.path(wdir, "Distance Bar Graphs")
+  if(!dir.exists(wdir)) {dir.create(wdir); dir.create(mxdir);
+    dir.create(hdir); dir.create(bgdir)}
+  
+  # group None with > 50
+  hmdists = colnames(dat) %>% .[grep("Bin", .)]
+  group_none = function(x) dat[get(x) == "None", c(x) := "> 50 um"]
+  walk(hmdists, group_none)
+  
+  # define plotting colors
+  dat = dat %>%
+    .[, StateColors := factor(State, labels = pcols$State)] %>%
+    .[, StatePastelColors := factor(State, labels = pcols$StatePastel)] %>%
+    .[, SampleColors := factor(Sample, labels = pcols$Sample)] %>%
+    .[, ConditionColors := factor(Condition, labels = pcols$Condition)] %>%
+    .[, ConditionPastelColors := factor(Condition,
+                                        labels = pcols$ConditionPastel)] %>%
+    .[, LayerColors := factor(Layer, labels = pcols$Layer)] %>%
+    .[, DistanceBinColors := factor(DistanceBin, labels = pcols$DistanceBin)]
+  
+  
+  ## MIXED EFFECTS MODELS
+  
+  # run models
+  mxef = map(mx, ~mixed_marker(.x, dat, mxdir))
+  mxef = rbindlist(mxef)
+  
+  # add distance mixed models
+  m3 = mixed_effects(dat, Distance ~ State + (1|Sample), "Distance")
+  m4 = mixed_effects(dat[Condition == "Control"],
+                     Distance ~ State + (1|Sample), "Distance in CTRL")
+  m5 = mixed_effects(dat[Condition == "Alzheimer"],
+                     Distance ~ State + (1|Sample), "Distance in AD")
+  
+  # bind mixed model data
+  mxef = rbind(mxef, m3, m4, m5)
+  
+  # write to file
+  brainstorm::add_worksheet(pwb, lab, mxef)
+  wb_colors = list(# State = "#DCE5DF", Condition = "#E4DEDD",
+    State = "#BDDBC8", Condition = "#E2D0CA",
+    Distance = "#E0EAF5", `Distance in CTRL` = "#D1E0F0", `Distance in AD` = "#C1D6EB")
+  iwalk(wb_colors, ~addStyle(pwb, lab, createStyle(fgFill = .x),
+                             rows = which(mxef$Model == .y) + 1,
+                             cols = 2, stack = T))
+  
+  ## SUMMARY PLOT
+  cond_dat = copy(dat) %>%
+    .[, .N, by = c("State", "Condition")] %>%
+    .[order(.[, c("State", "Condition")]), ] %>%
+    .[, Proportion := map(.(N), ~.x*100/sum(N)), by = c("Condition")] %>%
+    .[, Label := paste0(round(Proportion, 1), "%")]
+  
+  state_dat = copy(dat) %>%
+    .[, .N, by = c("State", "Condition")] %>%
+    .[order(.[, c("State", "Condition")]), ] %>%
+    .[, Proportion := map(.(N), ~.x*100/sum(N)), by = c("State")] %>%
+    .[, Label := paste0(round(Proportion, 1), "%")]
+  
+  
+  # plot proportions data
+  cond_plot = ggplot(cond_dat, aes(x = Condition, y = Proportion, fill = State, label = Label)) +
+    geom_bar(position = "stack", stat = "identity", ,
+             width = 0.5, color = "black", size = 0.4) +
+    scale_fill_manual(values = levels(dat[["StatePastelColors"]])) + 
+    scale_y_continuous(expand = expansion(mult = c(0, 0))) +
+    geom_text(size = 3, position = position_stack(vjust = 0.5)) +
+    labs(x = "Condition", y = "Proportion") +
+    bg_theme + theme(legend.position = "none")
+  
+  # plot proportions data
+  state_plot = ggplot(state_dat, aes(x = State, y = Proportion, fill = Condition, label = Label)) +
+    geom_bar(position = "stack", stat = "identity", ,
+             width = 0.5, color = "black", size = 0.4) +
+    scale_fill_manual(values = levels(dat[["ConditionPastelColors"]])) + 
+    scale_y_continuous(expand = expansion(mult = c(0, 0))) +
+    geom_text(size = 3, position = position_stack(vjust = 0.5)) +
+    labs(x = "State", y = "Proportion") +
+    bg_theme + theme(legend.position = "none")
+  
+  comb_plot = ggarrange(cond_plot, state_plot, ncol = 1)
+  
+   ggsave(file.path(wdir, "Proportions Summary.pdf"), comb_plot, width = 4, height = 12)
+  
+  
+  ## CONDITION/STATE BOXPLOTS
+  
+  # create boxplots
+  condition_plots = map(mx, ~plot_marker(dat, .x, "Condition", "ConditionColors"))
+  state_plots = map(mx, ~plot_marker(dat, .x, "State", "StateColors"))
+  
+  # get legends
+  condition_legend = get_legend(plot_marker(dat, mx[1], "Condition", "ConditionColors", legend = TRUE))
+  state_legend = get_legend(plot_marker(dat, mx[1], "State", "StateColors", legend = TRUE))
+  
+  # create composite plots
+  ggsave(file.path(wdir, "Marker Expression by Condition.pdf"), arrange_plots(condition_plots, condition_legend, lab, "Condition"),
+         width = ceiling(length(mx)/2)*3, height = 10)
+  
+  ggsave(file.path(wdir, "Marker Expression by State.pdf"), arrange_plots(state_plots, state_legend, lab, "State"),
+         width = ceiling(length(mx)/2)*3, height = 10)
+  
+  
+  ## LAYER BOXPLOTS
+  
+  # create boxplots
+  layer_condition_plots = map(mx, ~plot_marker(dat, .x, "Condition", "ConditionColors", facet = "Layer"))
+  layer_state_plots = map(mx, ~plot_marker(dat, .x, "State", "StateColors", facet = "Layer"))
+  
+  # get legends
+  layer_condition_legend = get_legend(plot_marker(dat, mx[1], "Condition", "ConditionColors", legend = TRUE, facet = "Layer"))
+  layer_state_legend = get_legend(plot_marker(dat, mx[1], "State", "StateColors", legend = TRUE, facet = "Layer"))
+  
+  # create composite plots
+  ggsave(file.path(wdir, "Marker Expression by Condition per Layer.pdf"),
+         arrange_plots(layer_condition_plots, layer_condition_legend, lab,
+                       "Condition per Layer", nwidth = 2),
+         width = 24, height = length(mx)*3)
+  
+  ggsave(file.path(wdir, "Marker Expression by State per Layer.pdf"),
+         arrange_plots(layer_state_plots, layer_state_legend, lab,
+                       "State per Layer", nwidth = 2),
+         width = 24, height = length(mx)*3)
+
+  
+  ## BAR GRAPHS
+  
+  # define distance metrics
+  dists = c("Distance")
+  
+  # plot bar graphs for state
+  walk(dists, ~plot_bg(dat, "State", "StatePastelColors", lab, file.path(bgdir, paste("State Within", .x)), paste0(.x, "Bin")))
+  
+  # plot bar graphs for distance
+  walk(dists, ~plot_bg(dat, paste0(.x, "Bin"), "DistanceBinColors", lab, file.path(bgdir, paste(.x, "Within State")), "State"))
+  
+  
+  ## HISTOGRAMS
+  
+  walk(dists, ~plot_hists(dat, .x, "StatePastelColors", lab, fname = file.path(hdir, paste(.x, "in Select CTRL with Total Denominator")), condvar = c("Control"), smplvar = c("2169", "2250"), bin_width = 25, total_denominator = T))
+  
+  walk(dists, ~plot_hists(dat, .x, "StatePastelColors", lab, fname = file.path(hdir, paste(.x, "in CTRL with Total Denominator")), condvar = c("Control"), bin_width = 25, total_denominator = T))
+  
+      walk(dists, ~plot_hists(dat, .x, "StatePastelColors", lab, fname = file.path(hdir, paste(.x, "in AD with Total Denominator")), condvar = c("Alzheimer"), bin_width = 25, total_denominator = T))
+    
+  # return data
+  return(dat)
+  
+}
+
+```
+
+# Create Plots
+
+Create the plots specified in `plot_data` by mapping over `all`.
+
+```{r create-plots}
+
+# define markers of interest
+markers = list(
+  Astrocyte = c("GFAP", "YKL40", "VIM", "TSPO", "EAAT1", "EAAT2", "GS"),
+  Microglia = c("MHC2", "CD68", "TMEM119", "TSPO", "FTL"),
+  Vessel = c("GFAP", "YKL40", "VIM", "TSPO", "EAAT1", "EAAT2", "GS"))
+
+# define distance colors
+distcols = c('< 25 um' = "#FFAF85", '25-50 um' = "#FFED85", '> 50 um' = "#96BDD9")
+
+# define color palette
+cols = list(
+  DistanceBin = distcols,
+  Layer = c(II = "#DDF2B2", III = "#8DD2B9", IV = "#39AEC3", V = "#2072B1", VI = "#0C2C84"),
+  Sample = c('1190' = "#A6CEE3", '1301' = "#5D9FC9", '1619' = "#2A7FB0", '1684' = "#79B79A", '1820' = "#9ED57B", '2124' = "#5AB348", '2148' = "#619E45", '2157' = "#CC9B7F", '2169' = "#F37272", '2191' = "#E62D2F", '2207' = "#ED593B", '2242' = "#FBB268", '2250' = "#FDA13B", '2274' = "#FF7F00"),
+  Condition = c(Control = "#377EB8", Alzheimer = "#CE6D8B"),
+  State = c('Homeostatic' = "#39B200", 'Intermediate' = "#F0C808", 'Reactive' = "#960200"),
+  StatePastel = c('Homeostatic' = "#9ECC7F", 'Intermediate' = "#EADA86", 'Reactive' = "#B67977"),
+  ConditionPastel = c(Control = "#B0C6DE", Alzheimer = "#E4C2CC")
+)
+
+# create plots
+wb = createWorkbook()
+plots = imap(all, ~plot_data(.x, .y, markers[[.y]], cols, wb))
+saveWorkbook(wb, file.path(dir6, "Mixed Effects Models.xlsx"), overwrite = TRUE)
+
+```
+
+# Distance to Plaques
+
+Now, get summary statistics for distance to plaques to compute Chi-squared test.
+
+```{r count-distance}
+
+count_distance = function(dat, lab, pwb) {
+  
+  # create data frames
+  close_plaques = dat[Distance <= 50, .N, by = c("Condition", "State")]
+  far_plaques = dat[Distance > 50 | is.na(Distance), .N,
+                    by = c("Condition", "State")]
+  
+  # set names
+  setnames(close_plaques, "N", "Close to Plaques/Tangles")
+  setnames(far_plaques, "N", "Far from Plaques/Tangles")
+  
+  # merge data
+  pdata = merge(close_plaques, far_plaques, by = c("Condition", "State"), sort = F)
+  
+  # add to Excel
+  brainstorm::add_worksheet(pwb, lab, pdata)
+  
+}
+
+```
+
+Get summary statistics by mapping over `all`.
+
+```{r get-distance}
+
+# create plots
+plaque_wb = createWorkbook()
+plots = imap(all, ~count_distance(.x, .y, plaque_wb))
+saveWorkbook(plaque_wb, file.path(dir6, "Distance to Neuropathology Proportions.xlsx"), overwrite = TRUE)
+
+```

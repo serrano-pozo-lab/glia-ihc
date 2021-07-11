@@ -86,30 +86,30 @@ code span.wa { color: #5e5e5e; font-style: italic; } /* Warning */
 </style>
 
   <!--radix_placeholder_meta_tags-->
-  <title>IHC and ML to Phenotype AD Glia: Microglia Annotation</title>
+  <title>IHC and ML to Phenotype AD Glia: Partition by Condition</title>
 
-  <meta property="description" itemprop="description" content="This ImageJ script extracts the IBA1 channel from multi-channel TIFF images and assigns each image a random alphanumeric code for blinded microglia annotation."/>
+  <meta property="description" itemprop="description" content="This R script partitions the data into training, test, and validation sets using stratified random sampling by condition (i.e., CTRL vs. AD)."/>
 
   <link rel="icon" type="image/vnd.microsoft.icon" href="images/favicon.ico"/>
 
 
   <!--  https://developers.facebook.com/docs/sharing/webmasters#markup -->
-  <meta property="og:title" content="IHC and ML to Phenotype AD Glia: Microglia Annotation"/>
+  <meta property="og:title" content="IHC and ML to Phenotype AD Glia: Partition by Condition"/>
   <meta property="og:type" content="article"/>
-  <meta property="og:description" content="This ImageJ script extracts the IBA1 channel from multi-channel TIFF images and assigns each image a random alphanumeric code for blinded microglia annotation."/>
+  <meta property="og:description" content="This R script partitions the data into training, test, and validation sets using stratified random sampling by condition (i.e., CTRL vs. AD)."/>
   <meta property="og:locale" content="en_US"/>
   <meta property="og:site_name" content="IHC and ML to Phenotype AD Glia"/>
 
   <!--  https://dev.twitter.com/cards/types/summary -->
   <meta property="twitter:card" content="summary"/>
-  <meta property="twitter:title" content="IHC and ML to Phenotype AD Glia: Microglia Annotation"/>
-  <meta property="twitter:description" content="This ImageJ script extracts the IBA1 channel from multi-channel TIFF images and assigns each image a random alphanumeric code for blinded microglia annotation."/>
+  <meta property="twitter:title" content="IHC and ML to Phenotype AD Glia: Partition by Condition"/>
+  <meta property="twitter:description" content="This R script partitions the data into training, test, and validation sets using stratified random sampling by condition (i.e., CTRL vs. AD)."/>
 
   <!--/radix_placeholder_meta_tags-->
   <!--radix_placeholder_rmarkdown_metadata-->
 
   <script type="text/json" id="radix-rmarkdown-metadata">
-  {"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["title","description","output"]}},"value":[{"type":"character","attributes":{},"value":["Microglia Annotation"]},{"type":"character","attributes":{},"value":["This ImageJ script extracts the IBA1 channel from multi-channel TIFF images and assigns each image a random alphanumeric code for blinded microglia annotation.\n"]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["distill::distill_article"]}},"value":[{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["toc"]}},"value":[{"type":"logical","attributes":{},"value":[true]}]}]}]}
+  {"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["title","description","output"]}},"value":[{"type":"character","attributes":{},"value":["Partition by Condition"]},{"type":"character","attributes":{},"value":["This R script partitions the data into training, test, and validation sets using stratified random sampling by condition (i.e., CTRL vs. AD).\n"]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["distill::distill_article"]}},"value":[{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["toc"]}},"value":[{"type":"logical","attributes":{},"value":[true]}]}]}]}
   </script>
   <!--/radix_placeholder_rmarkdown_metadata-->
   <!--radix_placeholder_navigation_in_header-->
@@ -2177,7 +2177,7 @@ code span.wa { color: #5e5e5e; font-style: italic; } /* Warning */
 <!--radix_placeholder_front_matter-->
 
 <script id="distill-front-matter" type="text/json">
-{"title":"Microglia Annotation","description":"This ImageJ script extracts the IBA1 channel from multi-channel TIFF images and assigns each image a random alphanumeric code for blinded microglia annotation.","authors":[]}
+{"title":"Partition by Condition","description":"This R script partitions the data into training, test, and validation sets using stratified random sampling by condition (i.e., CTRL vs. AD).","authors":[]}
 </script>
 
 <!--/radix_placeholder_front_matter-->
@@ -2257,112 +2257,154 @@ Supervised ML
 <!--/radix_placeholder_site_before_body-->
 
 <div class="d-title">
-<h1>Microglia Annotation</h1>
+<h1>Partition by Condition</h1>
 <!--radix_placeholder_categories-->
 <!--/radix_placeholder_categories-->
-<p><p>This ImageJ script extracts the IBA1 channel from multi-channel TIFF images and assigns each image a random alphanumeric code for blinded microglia annotation.</p></p>
+<p><p>This R script partitions the data into training, test, and validation sets using stratified random sampling by condition (i.e., CTRL vs. AD).</p></p>
 </div>
 
 
 <div class="d-article">
-<p>This script is written in the ImageJ Macro Language (IJM).</p>
-<pre class="ijm IJM"><code>macro &quot;IBA1 Channel Extraction&quot; {
+<div class="d-contents d-contents-float">
+<nav class="l-text toc figcaption" id="TOC">
+<h3>Contents</h3>
+<ul>
+<li><a href="#dependencies">Dependencies</a></li>
+<li><a href="#retrieve-roi-paths">Retrieve ROI Paths</a></li>
+<li><a href="#partition-rois">Partition ROIs</a></li>
+</ul>
+</nav>
+</div>
+<h1 id="dependencies">Dependencies</h1>
+<p>Load requisite packages and define directories. Note that this script uses my personal utilities package brainstorm, which can be downloaded via <code>devtools::install_github("ayushnoori/brainstorm")</code>.</p>
+<div class="layout-chunk" data-layout="l-body">
+<div class="sourceCode">
+<pre class="sourceCode r"><code class="sourceCode r"><span class='co'># data manipulation</span>
+<span class='kw'><a href='https://rdrr.io/r/base/library.html'>library</a></span><span class='op'>(</span><span class='va'><a href='https://r-datatable.com'>data.table</a></span><span class='op'>)</span>
+<span class='kw'><a href='https://rdrr.io/r/base/library.html'>library</a></span><span class='op'>(</span><span class='va'><a href='http://purrr.tidyverse.org'>purrr</a></span><span class='op'>)</span>
+<span class='kw'><a href='https://rdrr.io/r/base/library.html'>library</a></span><span class='op'>(</span><span class='va'><a href='https://magrittr.tidyverse.org'>magrittr</a></span><span class='op'>)</span>
 
-    setBatchMode(true);
+<span class='co'># fast file system operations</span>
+<span class='kw'><a href='https://rdrr.io/r/base/library.html'>library</a></span><span class='op'>(</span><span class='va'><a href='http://fs.r-lib.org'>fs</a></span><span class='op'>)</span>
 
-    input = getDirectory(&quot;Choose input data folder.&quot;);
-    files = getFileList(input);
-    // Array.show(files);
+<span class='co'># partition data</span>
+<span class='kw'><a href='https://rdrr.io/r/base/library.html'>library</a></span><span class='op'>(</span><span class='va'><a href='https://github.com/topepo/caret/'>caret</a></span><span class='op'>)</span>
 
-    dir = &quot;C:/Users/ayush/Dropbox (Partners HealthCare)/Single-Cell Multiplex IHC/Multiplex IHC Project/Multiplex IHC (GitLab)/&quot;;
-    datadir = dir + &quot;Data/2 - Channel Extraction/Microglia/&quot;;
+<span class='co'># utility functions</span>
+<span class='kw'><a href='https://rdrr.io/r/base/library.html'>library</a></span><span class='op'>(</span><span class='va'><a href='https://www.ayushnoori.com/brainstorm'>brainstorm</a></span><span class='op'>)</span>
+</code></pre>
+</div>
+</div>
+<p>Note that directories are relative to the R project path.</p>
+<div class="layout-chunk" data-layout="l-body">
+<div class="sourceCode">
+<pre class="sourceCode r"><code class="sourceCode r"><span class='co'># set directories</span>
+<span class='va'>ddir</span> <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/file.path.html'>file.path</a></span><span class='op'>(</span><span class='st'>"Data"</span>, <span class='st'>"3 - ROIs"</span><span class='op'>)</span>
+<span class='va'>pdir</span> <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/file.path.html'>file.path</a></span><span class='op'>(</span><span class='st'>"Data"</span>, <span class='st'>"4 - Condition Partition"</span><span class='op'>)</span>
+<span class='va'>dir1</span> <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/file.path.html'>file.path</a></span><span class='op'>(</span><span class='st'>"Results"</span>, <span class='st'>"CNN"</span>, <span class='st'>"1.1 - Condition Partition"</span><span class='op'>)</span>
 
+<span class='co'># create file structure</span>
+<span class='va'>celltypes</span> <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='st'>"Astrocyte"</span>, <span class='st'>"Microglia"</span>, <span class='st'>"Vessel"</span><span class='op'>)</span> <span class='op'>%&gt;%</span> <span class='fu'>purrr</span><span class='fu'>::</span><span class='fu'><a href='https://purrr.tidyverse.org/reference/set_names.html'>set_names</a></span><span class='op'>(</span><span class='op'>)</span>
+<span class='va'>grp</span> <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='st'>"Train"</span>, <span class='st'>"Test"</span>, <span class='st'>"Validation"</span><span class='op'>)</span> <span class='op'>%&gt;%</span> <span class='fu'>purrr</span><span class='fu'>::</span><span class='fu'><a href='https://purrr.tidyverse.org/reference/set_names.html'>set_names</a></span><span class='op'>(</span><span class='op'>)</span>
+<span class='va'>pheno</span> <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='st'>"CTRL"</span>, <span class='st'>"AD"</span><span class='op'>)</span> <span class='op'>%&gt;%</span> <span class='fu'>purrr</span><span class='fu'>::</span><span class='fu'><a href='https://purrr.tidyverse.org/reference/set_names.html'>set_names</a></span><span class='op'>(</span><span class='op'>)</span>
+<span class='va'>dirs</span> <span class='op'>=</span> <span class='fu'><a href='https://purrr.tidyverse.org/reference/map2.html'>pmap_chr</a></span><span class='op'>(</span><span class='fu'><a href='https://rdrr.io/r/base/expand.grid.html'>expand.grid</a></span><span class='op'>(</span><span class='va'>pdir</span>, <span class='va'>celltypes</span>, <span class='va'>grp</span>, <span class='va'>pheno</span><span class='op'>)</span>, <span class='va'>file.path</span><span class='op'>)</span>
 
-    ////////////////////////////////////////////////////////////
-    /////  FUNCTION FOR RANDOM ID
-    ////////////////////////////////////////////////////////////
-    
-    function randomString(length, chars) {
-        result = &quot;&quot;;
-        for (i = 0; i &lt; length; i++) {
-            maxlen = lengthOf(chars)-1;
-            rand = round(random * maxlen);
-            result +=  substring(chars, rand, rand+1);
-        }
-        return result;
-    }
-    
+<span class='co'># remove prior directories/files if they exist</span>
+<span class='va'>check_dir</span> <span class='op'>=</span> <span class='kw'>function</span><span class='op'>(</span><span class='va'>fname</span><span class='op'>)</span> <span class='op'>{</span><span class='kw'>if</span><span class='op'>(</span><span class='fu'>fs</span><span class='fu'>::</span><span class='fu'><a href='http://fs.r-lib.org/reference/file_access.html'>dir_exists</a></span><span class='op'>(</span><span class='va'>fname</span><span class='op'>)</span><span class='op'>)</span> <span class='fu'>fs</span><span class='fu'>::</span><span class='fu'><a href='http://fs.r-lib.org/reference/delete.html'>dir_delete</a></span><span class='op'>(</span><span class='va'>fname</span><span class='op'>)</span>; <span class='fu'>fs</span><span class='fu'>::</span><span class='fu'><a href='http://fs.r-lib.org/reference/create.html'>dir_create</a></span><span class='op'>(</span><span class='va'>fname</span><span class='op'>)</span><span class='op'>}</span>
+<span class='fu'><a href='https://purrr.tidyverse.org/reference/map.html'>walk</a></span><span class='op'>(</span><span class='va'>dirs</span>, <span class='va'>check_dir</span><span class='op'>)</span>
+</code></pre>
+</div>
+</div>
+<h1 id="retrieve-roi-paths">Retrieve ROI Paths</h1>
+<p>Write function to retrieve ROI paths.</p>
+<div class="layout-chunk" data-layout="l-body">
+<div class="sourceCode">
+<pre class="sourceCode r"><code class="sourceCode r"><span class='va'>retrieve_paths</span> <span class='op'>=</span> <span class='kw'>function</span><span class='op'>(</span><span class='va'>fname</span><span class='op'>)</span> <span class='op'>{</span>
+  
+  <span class='co'># list TIFF files in "/&lt;celltype&gt; ROIs" subdirectories</span>
+  <span class='va'>tiffs</span> <span class='op'>=</span> <span class='fu'><a href='https://purrr.tidyverse.org/reference/map.html'>map</a></span><span class='op'>(</span><span class='va'>celltypes</span>, <span class='op'>~</span><span class='fu'><a href='https://rdrr.io/r/base/paste.html'>paste</a></span><span class='op'>(</span><span class='va'>.x</span>, <span class='st'>"ROIs"</span><span class='op'>)</span> <span class='op'>%&gt;%</span>
+                <span class='fu'><a href='https://rdrr.io/r/base/file.path.html'>file.path</a></span><span class='op'>(</span><span class='va'>fname</span>, <span class='va'>.</span><span class='op'>)</span> <span class='op'>%&gt;%</span>
+                <span class='fu'><a href='https://rdrr.io/r/base/list.files.html'>list.files</a></span><span class='op'>(</span>pattern <span class='op'>=</span> <span class='st'>"\\.tif$"</span>, full.names <span class='op'>=</span> <span class='cn'>TRUE</span><span class='op'>)</span><span class='op'>)</span>
+  
+  <span class='kw'><a href='https://rdrr.io/r/base/function.html'>return</a></span><span class='op'>(</span><span class='va'>tiffs</span><span class='op'>)</span>
+  
+<span class='op'>}</span>
+</code></pre>
+</div>
+</div>
+<p>Then, map function over crop list.</p>
+<div class="layout-chunk" data-layout="l-body">
+<div class="sourceCode">
+<pre class="sourceCode r"><code class="sourceCode r"><span class='co'># get crop list</span>
+<span class='va'>crops</span> <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/file.path.html'>file.path</a></span><span class='op'>(</span><span class='va'>ddir</span>, <span class='va'>pheno</span><span class='op'>)</span> <span class='op'>%&gt;%</span> <span class='fu'><a href='https://rdrr.io/r/base/list.files.html'>list.files</a></span><span class='op'>(</span>full.names <span class='op'>=</span> <span class='cn'>TRUE</span><span class='op'>)</span>
 
-    ////////////////////////////////////////////////////////////
-    /////  ITERATE OVER IMAGES
-    ////////////////////////////////////////////////////////////
-    
-    for (f = 0; f &lt; files.length; f++) {
+<span class='co'># get TIFF file paths</span>
+<span class='va'>tiffs</span> <span class='op'>=</span> <span class='fu'><a href='https://purrr.tidyverse.org/reference/map.html'>map</a></span><span class='op'>(</span><span class='va'>crops</span>, <span class='va'>retrieve_paths</span><span class='op'>)</span>
 
-        open(input + files[f]);
-        Roi.remove; // remove active selection, if any
-    
-        ////////////////////////////////////////////////////////////
-        /////  LOAD IMAGE + DEFINE MARKERS
-        ////////////////////////////////////////////////////////////
-        
-        image = getTitle(); // get crop title
-        selectImage(image); // shift focus to the selected crop
-        filename = substring(image, 0, indexOf(image, &quot;_Reordered.tif&quot;));
-        
-        splitname = split(filename, &quot;_&quot;);   
-        sample = splitname[0];
-        layer = splitname[1];
-        crop = splitname[2];
-        crop = substring(crop, 4);
-        
-        if (sample == &quot;1190&quot; || sample == &quot;1301&quot; || sample == &quot;1619&quot; || sample == &quot;2169&quot; || sample == &quot;2191&quot; || sample == &quot;2250&quot; || sample == &quot;2274&quot;) {
-            condition = &quot;CTRL&quot;;
-        } else {
-            condition = &quot;AD&quot;;
-        }
-        
-        print(filename);
+<span class='co'># aggregate TIFF file paths by cell type</span>
+<span class='va'>tiffs</span> <span class='op'>=</span> <span class='fu'><a href='https://purrr.tidyverse.org/reference/map.html'>map</a></span><span class='op'>(</span><span class='va'>celltypes</span>, <span class='op'>~</span><span class='fu'><a href='https://rdrr.io/r/base/unlist.html'>unlist</a></span><span class='op'>(</span><span class='fu'><a href='https://purrr.tidyverse.org/reference/map.html'>map</a></span><span class='op'>(</span><span class='va'>tiffs</span>, <span class='va'>.x</span><span class='op'>)</span>, use.names <span class='op'>=</span> <span class='cn'>FALSE</span><span class='op'>)</span><span class='op'>)</span>
+</code></pre>
+</div>
+</div>
+<h1 id="partition-rois">Partition ROIs</h1>
+<p>Define function to partition ROIs into training, test, and validation sets.</p>
+<div class="layout-chunk" data-layout="l-body">
+<div class="sourceCode">
+<pre class="sourceCode r"><code class="sourceCode r"><span class='va'>partition_rois</span> <span class='op'>=</span> <span class='kw'>function</span><span class='op'>(</span><span class='va'>flist</span>, <span class='va'>lab</span><span class='op'>)</span> <span class='op'>{</span>
+  
+  <span class='co'># construct data table</span>
+  <span class='va'>dat</span> <span class='op'>=</span> <span class='fu'><a href='https://Rdatatable.gitlab.io/data.table/reference/data.table.html'>data.table</a></span><span class='op'>(</span>Path <span class='op'>=</span> <span class='va'>flist</span><span class='op'>)</span>
+  
+  <span class='co'># parse metadata from file path</span>
+  <span class='va'>dat</span> <span class='op'>%&gt;%</span>
+    <span class='va'>.</span><span class='op'>[</span>, <span class='va'>Name</span> <span class='op'>:=</span> <span class='fu'><a href='https://rdrr.io/r/base/basename.html'>basename</a></span><span class='op'>(</span><span class='va'>Path</span><span class='op'>)</span><span class='op'>]</span> <span class='op'>%&gt;%</span> 
+    <span class='va'>.</span><span class='op'>[</span>, <span class='va'>Group</span> <span class='op'>:=</span> <span class='va'>lab</span><span class='op'>]</span> <span class='op'>%&gt;%</span> 
+    <span class='va'>.</span><span class='op'>[</span>, <span class='va'>Condition</span> <span class='op'>:=</span> <span class='fu'><a href='https://purrr.tidyverse.org/reference/map.html'>map_chr</a></span><span class='op'>(</span><span class='fu'><a href='https://Rdatatable.gitlab.io/data.table/reference/tstrsplit.html'>strsplit</a></span><span class='op'>(</span><span class='va'>Path</span>, <span class='st'>"/"</span><span class='op'>)</span>, <span class='fl'>3</span><span class='op'>)</span><span class='op'>]</span> <span class='op'>%&gt;%</span>
+    <span class='va'>.</span><span class='op'>[</span>, <span class='va'>Sample</span> <span class='op'>:=</span> <span class='va'>flist</span> <span class='op'>%&gt;%</span> <span class='fu'><a href='https://Rdatatable.gitlab.io/data.table/reference/tstrsplit.html'>strsplit</a></span><span class='op'>(</span><span class='st'>"/"</span><span class='op'>)</span> <span class='op'>%&gt;%</span> <span class='fu'><a href='https://purrr.tidyverse.org/reference/map.html'>map_chr</a></span><span class='op'>(</span><span class='fl'>4</span><span class='op'>)</span> <span class='op'>%&gt;%</span>
+        <span class='fu'><a href='https://Rdatatable.gitlab.io/data.table/reference/tstrsplit.html'>strsplit</a></span><span class='op'>(</span><span class='st'>"_"</span><span class='op'>)</span> <span class='op'>%&gt;%</span> <span class='fu'><a href='https://purrr.tidyverse.org/reference/map.html'>map_chr</a></span><span class='op'>(</span><span class='fl'>1</span><span class='op'>)</span><span class='op'>]</span> <span class='op'>%&gt;%</span>
+    <span class='va'>.</span><span class='op'>[</span>, <span class='va'>Batch</span> <span class='op'>:=</span> <span class='fu'><a href='https://Rdatatable.gitlab.io/data.table/reference/fifelse.html'>ifelse</a></span><span class='op'>(</span><span class='va'>Sample</span> <span class='op'>%in%</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='st'>"1190"</span>, <span class='st'>"1301"</span>, <span class='st'>"2148"</span>, <span class='st'>"2157"</span>,
+                                      <span class='st'>"2191"</span>, <span class='st'>"2207"</span><span class='op'>)</span>, <span class='fl'>1</span>, <span class='fl'>2</span><span class='op'>)</span><span class='op'>]</span>
+  
+  <span class='co'># partition into test, training, and validation sets</span>
+  <span class='va'>train_lab</span> <span class='op'>=</span> <span class='va'>dat</span><span class='op'>[</span><span class='fu'><a href='https://rdrr.io/pkg/caret/man/createDataPartition.html'>createDataPartition</a></span><span class='op'>(</span><span class='va'>Condition</span>, p <span class='op'>=</span> <span class='fl'>0.6</span>, list <span class='op'>=</span> <span class='cn'>FALSE</span><span class='op'>)</span>, <span class='va'>Name</span><span class='op'>]</span>
+  <span class='va'>test_lab</span> <span class='op'>=</span> <span class='va'>dat</span><span class='op'>[</span><span class='op'>!</span><span class='va'>Name</span> <span class='op'>%in%</span> <span class='va'>train_lab</span><span class='op'>]</span> <span class='op'>%&gt;%</span>
+    <span class='va'>.</span><span class='op'>[</span><span class='fu'><a href='https://rdrr.io/pkg/caret/man/createDataPartition.html'>createDataPartition</a></span><span class='op'>(</span><span class='va'>Condition</span>, p <span class='op'>=</span> <span class='fl'>0.5</span>, list <span class='op'>=</span> <span class='cn'>FALSE</span><span class='op'>)</span>, <span class='va'>Name</span><span class='op'>]</span>
+  
+  <span class='co'># create partition variable</span>
+  <span class='va'>dat</span> <span class='op'>%&gt;%</span>
+    <span class='va'>.</span><span class='op'>[</span>, <span class='va'>Partition</span> <span class='op'>:=</span> <span class='st'>"Validation"</span><span class='op'>]</span> <span class='op'>%&gt;%</span>
+    <span class='va'>.</span><span class='op'>[</span><span class='va'>Name</span> <span class='op'>%in%</span> <span class='va'>train_lab</span>, <span class='va'>Partition</span> <span class='op'>:=</span> <span class='st'>"Train"</span><span class='op'>]</span> <span class='op'>%&gt;%</span>
+    <span class='va'>.</span><span class='op'>[</span><span class='va'>Name</span> <span class='op'>%in%</span> <span class='va'>test_lab</span>, <span class='va'>Partition</span> <span class='op'>:=</span> <span class='st'>"Test"</span><span class='op'>]</span> 
+  
+  <span class='co'># construct output path</span>
+  <span class='va'>dat</span><span class='op'>[</span>, <span class='va'>Output</span> <span class='op'>:=</span> <span class='fu'><a href='https://rdrr.io/r/base/file.path.html'>file.path</a></span><span class='op'>(</span><span class='va'>pdir</span>, <span class='va'>Group</span>, <span class='va'>Partition</span>, <span class='va'>Condition</span>, <span class='va'>Name</span><span class='op'>)</span><span class='op'>]</span>
+  
+  <span class='co'># copy TIFF files to appropriate output folder</span>
+  <span class='fu'><a href='https://purrr.tidyverse.org/reference/map2.html'>pwalk</a></span><span class='op'>(</span><span class='va'>dat</span><span class='op'>[</span>, <span class='fu'>.</span><span class='op'>(</span><span class='va'>Path</span>, <span class='va'>Output</span><span class='op'>)</span><span class='op'>]</span>, <span class='op'>~</span><span class='fu'>fs</span><span class='fu'>::</span><span class='fu'><a href='http://fs.r-lib.org/reference/copy.html'>file_copy</a></span><span class='op'>(</span><span class='va'>.x</span>, <span class='va'>.y</span><span class='op'>)</span><span class='op'>)</span>
+  
+  <span class='co'># print results</span>
+  <span class='fu'><a href='https://rdrr.io/r/base/cat.html'>cat</a></span><span class='op'>(</span><span class='fu'><a href='https://rdrr.io/r/base/paste.html'>paste</a></span><span class='op'>(</span><span class='st'>"\n"</span>, <span class='va'>lab</span>, <span class='st'>"ROIs:\n"</span><span class='op'>)</span><span class='op'>)</span>
+  <span class='fu'><a href='https://purrr.tidyverse.org/reference/map.html'>walk</a></span><span class='op'>(</span><span class='va'>dat</span><span class='op'>[</span>, <span class='fu'>.</span><span class='op'>(</span><span class='va'>Condition</span>, <span class='va'>Partition</span>, <span class='va'>Sample</span><span class='op'>)</span><span class='op'>]</span>, <span class='op'>~</span><span class='fu'><a href='https://rdrr.io/r/base/print.html'>print</a></span><span class='op'>(</span><span class='fu'><a href='https://rdrr.io/r/base/summary.html'>summary</a></span><span class='op'>(</span><span class='fu'><a href='https://rdrr.io/r/base/factor.html'>factor</a></span><span class='op'>(</span><span class='va'>.x</span><span class='op'>)</span><span class='op'>)</span><span class='op'>)</span><span class='op'>)</span>
 
-        ////////////////////////////////////////////////////////////
-        /////  RANDOMIZE CROP
-        ////////////////////////////////////////////////////////////
+  <span class='co'># return data table</span>
+  <span class='kw'><a href='https://rdrr.io/r/base/function.html'>return</a></span><span class='op'>(</span><span class='va'>dat</span><span class='op'>)</span>
+  
+<span class='op'>}</span>
+</code></pre>
+</div>
+</div>
+<p>Map function over TIFF file paths.</p>
+<div class="layout-chunk" data-layout="l-body">
+<div class="sourceCode">
+<pre class="sourceCode r"><code class="sourceCode r"><span class='co'># partition ROIs</span>
+<span class='va'>all</span> <span class='op'>=</span> <span class='fu'><a href='https://purrr.tidyverse.org/reference/imap.html'>imap</a></span><span class='op'>(</span><span class='va'>tiffs</span>, <span class='va'>partition_rois</span><span class='op'>)</span>
 
-        id = randomString(6, &quot;0123456789abcdefghijklmnopqrstuvwxyz&quot;);
-        // print(id);
-
-        Table.set(&quot;ID&quot;, f, id);
-        Table.set(&quot;Sample&quot;, f, sample);
-        Table.set(&quot;Layer&quot;, f, layer);
-        Table.set(&quot;Crop&quot;, f, crop);
-        Table.set(&quot;Condition&quot;, f, condition);
-        Table.set(&quot;File&quot;, f, filename);
-        Table.update();
-    
-        ////////////////////////////////////////////////////////////
-        /////  SAVE IBA1 CHANNEL
-        ////////////////////////////////////////////////////////////
-        
-        // duplicate IBA1 channel
-        selectImage(image); // shift focus to original
-        run(&quot;Duplicate...&quot;, &quot;title=IBA1 duplicate channels=3&quot;);
-
-        run(&quot;Enhance Contrast...&quot;, &quot;saturated=0.1&quot;); // only for visualization purposes
-        
-        selectWindow(&quot;IBA1&quot;); // shift focus to original
-        saveAs(&quot;Png&quot;, datadir + condition + &quot;/&quot; + id + &quot;.png&quot;);
-        close();
-
-        selectImage(image);
-        close();
-    
-    }
-
-    // save table with mappings
-    Table.save(datadir + &quot;ID Mappings.csv&quot;)
-
-}</code></pre>
-<div class="sourceCode" id="cb2"><pre class="sourceCode r distill-force-highlighting-css"><code class="sourceCode r"></code></pre></div>
+<span class='co'># save partition result</span>
+<span class='fu'><a href='https://rdrr.io/r/base/readRDS.html'>saveRDS</a></span><span class='op'>(</span><span class='va'>all</span>, <span class='fu'><a href='https://rdrr.io/r/base/file.path.html'>file.path</a></span><span class='op'>(</span><span class='va'>dir1</span>, <span class='st'>"ROI Partition by Condition.rds"</span><span class='op'>)</span><span class='op'>)</span>
+</code></pre>
+</div>
+</div>
+<div class="sourceCode" id="cb1"><pre class="sourceCode r distill-force-highlighting-css"><code class="sourceCode r"></code></pre></div>
 <!--radix_placeholder_article_footer-->
 <!--/radix_placeholder_article_footer-->
 </div>

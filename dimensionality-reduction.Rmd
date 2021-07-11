@@ -1,0 +1,408 @@
+---
+title: "Dimensionality Reduction"
+description: |
+ This R script performs dimensionality reduction and identifies representative astrocytes/microglia in each phenotypic cluster.
+output:
+  distill::distill_article:
+    toc: true
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(eval = FALSE)
+```
+
+# Dependencies
+
+Load requisite packages and define directories. Note that three packages are sourced from GitHub: `coolbutuseless/ggblur` to create the background blur, `eliocamp/ggnewscale` to use multiple scales (see [this post](https://eliocamp.github.io/codigo-r/2018/09/multiple-color-and-fill-scales-with-ggplot2/)) in a single plot, and my personal utilities package, `ayushnoori/brainstorm`.
+
+```{r load-packages, message=FALSE, warning=FALSE}
+
+# data manipulation
+library(data.table)
+library(purrr)
+library(magrittr)
+
+# t-SNE
+library(Rtsne)
+library(ggplot2)
+
+# convex hull, blur, and multiple scales
+library(ggblur)
+library(ggnewscale)
+
+# read TIFF files
+library(tiff)
+library(RColorBrewer)
+library(pheatmap)
+library(ggpubr)
+
+# utility functions
+library(brainstorm)
+
+```
+
+Note that directories are relative to the R project path.
+
+```{r define-directores}
+
+# set directories
+ddir = file.path("Data", "3 - ROIs")
+dir4 = file.path("Results", "4 - Spectral Clustering")
+dir5 = file.path("Results", "5 - Dimensionality Reduction")
+
+# set seed
+set.seed(1234)
+
+```
+
+# Load Data
+
+Load processed ROI measurement data from the `4 - Spectral Clustering` directory.
+
+```{r load-data}
+
+all = readRDS(file.path(dir4, "Z-Score Data.rds"))
+
+```
+
+Load and process GBM data.
+
+```{r gbm-data}
+
+state_cols = c("Homeostatic", "Intermediate", "Reactive")
+tmp = fread("Results/7 - Gradient Boosting Machines/State/Astrocyte/GBM Probabilities.csv")[, Max := pmap(.SD, ~which.max(as.numeric(c(...)))), .SDcols = state_cols ][, Max := factor(Max, levels = c(1, 2, 3), labels = state_cols)]
+
+tmp_h = tmp[State == "Homeostatic"]
+
+```
+
+# Define Plotting Functions
+
+Define plotting functions for t-distributed stochastic neighbor embedding (t-SNE) data.
+
+```{r plotting-functions}
+
+# plot t-SNE data
+plot_tsne = function(tsne, grp, grpcol, group, fname,
+                     area = NULL, areacol = NULL,
+                     PCA = FALSE, highlight = NULL, highlight_col = NULL) {
+  
+  tsne_plot = if(PCA) ggplot(tsne, aes(x = PC1, y = PC2)) else ggplot(tsne, aes(x = TSNE1, y = TSNE2))
+  
+  if(!is.null(area)) {
+    
+    tsne_plot = tsne_plot +
+      geom_point_blur(data = tsne, mapping = aes(color = get(area), fill = get(area)), blur_size = 30, blur_steps = 20) +
+      scale_color_manual(area, values = levels(tsne[[areacol]])) +
+      scale_fill_manual(area, values = levels(tsne[[areacol]])) +
+      new_scale_fill()
+
+  }
+  
+  tsne_plot = tsne_plot + 
+    geom_point(data = tsne, mapping = aes(fill = get(grp)), shape = 21, color = "black", stroke = 0.1, alpha = 0.8) +
+    scale_fill_manual(grp, values = levels(tsne[[grpcol]])) +
+    theme(
+        plot.title = element_text(hjust = 0.5, size=16, face = "bold"),
+        axis.title.x = element_text(size=12, face = "bold"),
+        axis.title.y = element_text(size=12, face = "bold"),
+        legend.title = element_text(size=12, face = "bold"),
+        legend.position = "right")
+  
+  if(PCA) {
+    tsne_plot = tsne_plot + ggtitle(paste(group, "PCA Plot")) +
+      labs(x = "PC1", y = "PC2")
+  } else {
+    tsne_plot = tsne_plot + ggtitle(paste(group, "t-SNE Plot")) +
+      labs(x = "t-SNE 1", y = "t-SNE 2")
+  }
+  
+  if(!is.null(highlight)) {
+    tsne_plot = tsne_plot +
+      geom_point(data = tsne[ID %in% highlight], fill = highlight_col, shape = 21, color = "black", stroke = 0.1, alpha = 1)
+  }
+  
+  ggsave(paste0(fname, ".pdf"), tsne_plot, width = 8, height = 6)
+  
+}
+
+
+```
+
+# Representative Crops
+
+Function to retrieve and plot TIFF images.
+
+```{r plot-tiff}
+
+# generate color palette
+generate_colors = function(col) {
+  cols = colorRampPalette(c("#FFFFFF", col))(100)
+  cols[1] = "#0A0A0A"
+  return(cols)
+}
+
+# plot TIFF from ID
+plot_tiff = function(dat, my_ID, mx, sel = c("Correlation", "Distance")) {
+ 
+  # get disease abbreviation
+  dislab = factor(dat[ID == my_ID, Condition], levels = c("Control", "Alzheimer"),
+                  labels = c("CTRL", "AD"))
+  
+  # get file path
+  fpath = file.path(ddir, dat[ID == my_ID, file.path(dislab, paste0(Sample, "_Layer", Layer, "_crop", Crop), paste(Group, "ROIs"), paste0(dislab, "_", ID, ".tif"))])
+  
+  # read TIFF file
+  my_tiff = suppressWarnings(readTIFF(fpath, all = T, info = T, as.is = T)) %>%
+   { if(length(dim(.[[1]])) > 2) map(., \(x) x[,,1] + x[,,2] + x[,,3]) else . }
+  
+  # set labels
+  tiff_lab = c("DAPI", "ALDH1L1", "IBA1", "GFAP", "MHC2", "TSPO", "EAAT2", "TMEM119", "CD68", "EAAT1", "VIM", "FTL", "YKL40", "GS", "HuCD", "ABETA", "PHF1")
+  names(my_tiff) = tiff_lab
+  
+  # set color palette
+  tiff_cols = rep_len(c("#064789", "#D33E43", "#65A48F", "#DC6ACF", "#009FB7", "#F18805", "#88726D", "#A05CFF"), length(my_tiff))
+  names(tiff_cols) = names(my_tiff)
+  
+  # select labels/colors
+  my_tiff = my_tiff[mx]
+  tiff_cols = tiff_cols[mx]
+  
+  # generate scale
+  my_breaks = unlist(my_tiff) %>% { seq(from = 0, to = max(.),
+                                               length.out = 101) }
+  
+  # plot images
+  my_img = imap(my_tiff, ~pheatmap(.x, main = .y,
+                                   color = generate_colors(tiff_cols[[.y]]),
+                                   breaks = my_breaks,
+                                   border_color = NA,
+                                   cluster_rows = F, cluster_cols = F,
+                                   legend = F, silent = T))
+  
+  # set annotation color
+  annot_col = if(dislab == "AD") "#D33E43" else "#65A48F"
+  
+  # aggregate plots
+  my_grobs = map(my_img, ~.[[4]])
+  comp_img = ggarrange(plotlist = my_grobs, nrow = 1) %>%
+    annotate_figure(top = text_grob(dat[ID == my_ID, paste0(Sample, " Layer ", Layer, " Crop ", Crop, ", ", Group, " #", Number, ": ", round(.SD, 4)), .SDcols = sel], color = annot_col, face = "bold", size = 14)) %>%
+    {. + theme(plot.margin = margin(t = 0.2, b = 0.2, unit = "in"))}
+  
+  return(comp_img)
+  
+}
+```
+
+Identify representative crops in each state across all cell-types (i.e., groups).
+
+```{r centroid-crops}
+
+# function to compute distance
+centroid_distance = function(pc1, pc2, ct1, ct2) {
+  return(sqrt((ct1 - pc1)^2 + (ct2 - pc2)^2))
+}
+
+# identify centroid crops
+centroid_crops = function(dat, full_dat, mx, ctdir, lab, ncrops = 10) {
+  
+  # find state
+  my_state = dat[1, State]
+  message(lab, " Centroid Crops: ", my_state)
+  
+  # calculate centroid
+  ctx = dat[, mean(PC1)]; cty = dat[, mean(PC2)]
+  
+  # compute distances to centroid, rank by least distance
+  dat = copy(dat) %>%
+    .[, CentroidDistance := pmap_dbl(dat[, .(PC1, PC2)],
+                                ~centroid_distance(.x, .y, ctx, cty))] %>%
+    setcolorder(c("ID", "CentroidDistance")) %>%
+    .[order(CentroidDistance), ]
+  
+  # write to file
+  fwrite(dat, file = file.path(ctdir, paste(my_state, "Centroid Crops.csv")))
+  
+  # plot PCA with highlights
+  plot_tsne(full_dat, "State", "PCAColors", lab,
+            file.path(ctdir, paste(my_state, "PCA Plot")), PCA = TRUE,
+            highlight = dat[1:ncrops, ID], highlight_col = dat[1, StateColors])
+  
+  # select markers to plot
+  plot_mx = if(lab == "Microglia") c("DAPI", "IBA1", mx) else c("DAPI", "ALDH1L1", mx)
+  
+  # create composite images for top 10 ROIs
+  imgs = map(dat[1:ncrops, ID], ~plot_tiff(dat, .x, plot_mx, "CentroidDistance"))
+  comp_imgs = ggarrange(plotlist = imgs, ncol = 1, nrow = 6)
+  
+  # save plots to multiple pages
+  ggexport(comp_imgs, filename = file.path(ctdir, paste(my_state, "Centroid Crops.pdf")), width = 8.5, height = 11)
+  
+  # save plots
+  ggsave(file.path(ctdir, paste(my_state, "Centroid Crops.pdf")), width = length(plot_mx), height = 1.4*ncrops + 4, limitsize = F)
+  
+  # return data
+  return(dat)
+  
+}
+```
+
+Identify most extreme crops.
+
+```{r extreme-crops}
+
+# function to compute distance
+pca_distance = function(pc1, pc2, other_dat) {
+    
+  other_dat %>%
+    .[, DistancePCA := sqrt((PC1 - pc1)^2 + (PC2 - pc2)^2)] %>%
+    .[, sum(DistancePCA)] %>% return()
+  
+}
+
+# identify extreme crops
+extreme_crops = function(dat, full_dat, mx, exdir, lab, ncrops = 10) {
+  
+  # find state
+  my_state = dat[1, State]
+  other_dat = full_dat[State != my_state, ]
+  message(lab, " Extreme Crops: ", my_state)
+  
+  # compute sum PCA distances
+  dat = copy(dat) %>%
+    .[, PCADistance := pmap_dbl(dat[, .(PC1, PC2)],
+                                ~pca_distance(.x, .y, other_dat))] %>%
+    setcolorder(c("ID", "PCADistance")) %>%
+    .[order(-PCADistance), ]
+  
+  # write to file
+  fwrite(dat, file = file.path(exdir, paste(my_state, "Extreme Crops.csv")))
+  
+  # plot PCA with highlights
+  plot_tsne(full_dat, "State", "PCAColors", lab,
+            file.path(exdir, paste(my_state, "PCA Plot")), PCA = TRUE,
+            highlight = dat[1:ncrops, ID], highlight_col = dat[1, StateColors])
+  
+  # select markers to plot
+  plot_mx = if(lab == "Microglia") c("DAPI", "IBA1", mx) else c("DAPI", "ALDH1L1", mx)
+  
+  # create composite images for top 10 ROIs
+  imgs = map(dat[1:ncrops, ID], ~plot_tiff(dat, .x, plot_mx, "PCADistance"))
+  comp_imgs = ggarrange(plotlist = imgs, ncol = 1, nrow = 6)
+  
+  # save plots to multiple pages
+  ggexport(comp_imgs, filename = file.path(exdir, paste(my_state, "Extreme Crops.pdf")), width = 8.5, height = 11)
+  
+  # return data
+  return(dat)
+  
+}
+```
+
+# Define t-SNE Function
+
+Define function to perform t-SNE. Note that `Rtsne::normalize_input` is not called as coordinates (i.e., z-scores) are not very large. The argument `do_PCA` is currently NOT utilized (included for consistency) as the resulting principal components are used to identify the most extreme astrocytes, or those closest to the centroid.
+
+```{r apply-tsne}
+
+apply_tsne = function(dat, lab, mx, pcols, do_TSNE = TRUE, do_PCA = TRUE) {
+  
+  # create subdirectories if needed
+  wdir = file.path(dir5, lab)
+  ctdir = file.path(wdir, "Centroid Crops")
+  exdir = file.path(wdir, "Extreme Crops")
+  if(!dir.exists(wdir)) { dir.create(wdir); dir.create(ctdir); dir.create(exdir) }
+  
+  # define plotting colors
+  dat = dat %>%
+    .[, StateColors := factor(State, labels = pcols$State)] %>%
+    .[, SampleColors := factor(Sample, labels = pcols$Sample)] %>%
+    .[, ConditionColors := factor(Condition, labels = pcols$Condition)] %>%
+    .[, PCAColors := factor(State, labels = pcols$PCA)]
+  
+  if(do_TSNE) {
+
+    # perform t-SNE
+    res = Rtsne(dat[, ..mx], verbose = TRUE, pca = FALSE,
+                normalize = FALSE, theta = 0)
+    res = as.data.table(res$Y)[, .(ID = dat$ID, TSNE1 = V1, TSNE2 = V2)]
+  
+    # join data with t-SNE results
+    dat = merge(dat, res, all = TRUE,  by = "ID")
+    
+    # plot t-SNE results
+    plot_tsne(dat, "State", "StateColors", lab,
+              file.path(wdir, "State t-SNE Plot"))
+    plot_tsne(dat, "Sample", "SampleColors", lab,
+              file.path(wdir, "Sample t-SNE Plot"))
+    plot_tsne(dat, "Condition", "ConditionColors", lab,
+              file.path(wdir, "Condition t-SNE Plot"))
+    
+    # plot combination t-SNE plots
+    plot_tsne(dat, "Condition", "ConditionColors", lab,
+              file.path(wdir, "Condition + State t-SNE Plot"),
+              "State", "StateColors")
+    plot_tsne(dat, "State", "StateColors", lab,
+              file.path(wdir, "State + Condition t-SNE Plot"),
+              "Condition", "ConditionColors")
+  
+  }
+  
+  # perform PCA
+  res_pca = as.data.frame(dat[, ..mx]) %>%
+    magrittr::set_rownames(dat[, ID]) %>%
+    prcomp() %>% .$x %>%
+    as.data.table(keep.rownames = "ID") %>%
+    .[, .(ID, PC1, PC2)]
+  
+  # join data with PCA results
+  dat = merge(dat, res_pca, by = "ID")
+  
+  # plot PCA results
+  plot_tsne(dat, "State", "StateColors", lab,
+            file.path(wdir, "State PCA Plot"), PCA = TRUE)
+  plot_tsne(dat, "Sample", "SampleColors", lab,
+            file.path(wdir, "Sample PCA Plot"), PCA = TRUE)
+  plot_tsne(dat, "Condition", "ConditionColors", lab,
+            file.path(wdir, "Condition PCA Plot"), PCA = TRUE)
+  
+  # compute centroid crops by phenotypic state
+  dat = dat[, centroid_crops(.SD, dat, mx, ctdir, lab, ncrops = 50),
+            .SDcols = colnames(dat), by = "State"][, -1]
+  
+  # compute extreme crops by phenotypic state
+  dat = dat[, extreme_crops(.SD, dat, mx, exdir, lab, ncrops = 50),
+            .SDcols = colnames(dat), by = "State"][, -1]
+  
+  # return data
+  return(dat)
+  
+}
+
+```
+
+# Perform t-SNE
+
+Perform t-SNE by mapping over `all`. Also, identify representative crops.
+
+```{r perform-tsne}
+
+# define markers of interest
+markers = list(Astrocyte = c("GFAP", "YKL40", "VIM", "TSPO",
+                             "EAAT1", "EAAT2", "GS"),
+               Microglia = c("MHC2", "CD68", "TMEM119", "TSPO", "FTL"),
+               Vessel = c("GFAP", "YKL40", "VIM", "TSPO", "EAAT1", "EAAT2", "GS"))
+
+# define color palette
+cols = list(
+  Sample = c('1190' = "#A6CEE3", '1301' = "#5D9FC9", '1619' = "#2A7FB0", '1684' = "#79B79A", '1820' = "#9ED57B", '2124' = "#5AB348", '2148' = "#619E45", '2157' = "#CC9B7F", '2169' = "#F37272", '2191' = "#E62D2F", '2207' = "#ED593B", '2242' = "#FBB268", '2250' = "#FDA13B", '2274' = "#FF7F00"),
+  Condition = c(Control = "#377EB8", Alzheimer = "#CE6D8B"),
+  State = c('Homeostatic' = "#39B200", 'Intermediate' = "#F0C808", 'Reactive' = "#960200"),
+  PCA = c('Homeostatic' = "#EAFCE2", 'Intermediate' = "#FCF9E9", 'Reactive' = "#FCE0E0")
+  )
+
+# perform t-SNE
+tsne = imap(all, ~apply_tsne(.x, .y, markers[[.y]], cols,
+                             do_TSNE = FALSE, do_PCA = TRUE))
+
+```

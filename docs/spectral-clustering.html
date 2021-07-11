@@ -86,30 +86,30 @@ code span.wa { color: #5e5e5e; font-style: italic; } /* Warning */
 </style>
 
   <!--radix_placeholder_meta_tags-->
-  <title>IHC and ML to Phenotype AD Glia: Microglia Annotation</title>
+  <title>IHC and ML to Phenotype AD Glia: Spectral Clustering</title>
 
-  <meta property="description" itemprop="description" content="This ImageJ script extracts the IBA1 channel from multi-channel TIFF images and assigns each image a random alphanumeric code for blinded microglia annotation."/>
+  <meta property="description" itemprop="description" content="This R script performs unsupervised spectral clustering to investigate the existence of diverse phenotypes of astrocytes and microglia in Alzheimer&#39;s."/>
 
   <link rel="icon" type="image/vnd.microsoft.icon" href="images/favicon.ico"/>
 
 
   <!--  https://developers.facebook.com/docs/sharing/webmasters#markup -->
-  <meta property="og:title" content="IHC and ML to Phenotype AD Glia: Microglia Annotation"/>
+  <meta property="og:title" content="IHC and ML to Phenotype AD Glia: Spectral Clustering"/>
   <meta property="og:type" content="article"/>
-  <meta property="og:description" content="This ImageJ script extracts the IBA1 channel from multi-channel TIFF images and assigns each image a random alphanumeric code for blinded microglia annotation."/>
+  <meta property="og:description" content="This R script performs unsupervised spectral clustering to investigate the existence of diverse phenotypes of astrocytes and microglia in Alzheimer&#39;s."/>
   <meta property="og:locale" content="en_US"/>
   <meta property="og:site_name" content="IHC and ML to Phenotype AD Glia"/>
 
   <!--  https://dev.twitter.com/cards/types/summary -->
   <meta property="twitter:card" content="summary"/>
-  <meta property="twitter:title" content="IHC and ML to Phenotype AD Glia: Microglia Annotation"/>
-  <meta property="twitter:description" content="This ImageJ script extracts the IBA1 channel from multi-channel TIFF images and assigns each image a random alphanumeric code for blinded microglia annotation."/>
+  <meta property="twitter:title" content="IHC and ML to Phenotype AD Glia: Spectral Clustering"/>
+  <meta property="twitter:description" content="This R script performs unsupervised spectral clustering to investigate the existence of diverse phenotypes of astrocytes and microglia in Alzheimer&#39;s."/>
 
   <!--/radix_placeholder_meta_tags-->
   <!--radix_placeholder_rmarkdown_metadata-->
 
   <script type="text/json" id="radix-rmarkdown-metadata">
-  {"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["title","description","output"]}},"value":[{"type":"character","attributes":{},"value":["Microglia Annotation"]},{"type":"character","attributes":{},"value":["This ImageJ script extracts the IBA1 channel from multi-channel TIFF images and assigns each image a random alphanumeric code for blinded microglia annotation.\n"]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["distill::distill_article"]}},"value":[{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["toc"]}},"value":[{"type":"logical","attributes":{},"value":[true]}]}]}]}
+  {"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["title","description","output"]}},"value":[{"type":"character","attributes":{},"value":["Spectral Clustering"]},{"type":"character","attributes":{},"value":["This R script performs unsupervised spectral clustering to investigate the existence of diverse phenotypes of astrocytes and microglia in Alzheimer's.\n"]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["distill::distill_article"]}},"value":[{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["toc"]}},"value":[{"type":"logical","attributes":{},"value":[true]}]}]}]}
   </script>
   <!--/radix_placeholder_rmarkdown_metadata-->
   <!--radix_placeholder_navigation_in_header-->
@@ -2177,7 +2177,7 @@ code span.wa { color: #5e5e5e; font-style: italic; } /* Warning */
 <!--radix_placeholder_front_matter-->
 
 <script id="distill-front-matter" type="text/json">
-{"title":"Microglia Annotation","description":"This ImageJ script extracts the IBA1 channel from multi-channel TIFF images and assigns each image a random alphanumeric code for blinded microglia annotation.","authors":[]}
+{"title":"Spectral Clustering","description":"This R script performs unsupervised spectral clustering to investigate the existence of diverse phenotypes of astrocytes and microglia in Alzheimer's.","authors":[]}
 </script>
 
 <!--/radix_placeholder_front_matter-->
@@ -2257,112 +2257,239 @@ Supervised ML
 <!--/radix_placeholder_site_before_body-->
 
 <div class="d-title">
-<h1>Microglia Annotation</h1>
+<h1>Spectral Clustering</h1>
 <!--radix_placeholder_categories-->
 <!--/radix_placeholder_categories-->
-<p><p>This ImageJ script extracts the IBA1 channel from multi-channel TIFF images and assigns each image a random alphanumeric code for blinded microglia annotation.</p></p>
+<p><p>This R script performs unsupervised spectral clustering to investigate the existence of diverse phenotypes of astrocytes and microglia in Alzheimer’s.</p></p>
 </div>
 
 
 <div class="d-article">
-<p>This script is written in the ImageJ Macro Language (IJM).</p>
-<pre class="ijm IJM"><code>macro &quot;IBA1 Channel Extraction&quot; {
+<div class="d-contents d-contents-float">
+<nav class="l-text toc figcaption" id="TOC">
+<h3>Contents</h3>
+<ul>
+<li><a href="#dependencies">Dependencies</a></li>
+<li><a href="#load-data">Load Data</a></li>
+<li><a href="#define-clustering-functions">Define Clustering Functions</a></li>
+<li><a href="#perform-spectral-clustering">Perform Spectral Clustering</a></li>
+<li><a href="#plot-heatmap">Plot Heatmap</a></li>
+</ul>
+</nav>
+</div>
+<p>knitr::opts_chunk$set(eval = FALSE)</p>
+<h1 id="dependencies">Dependencies</h1>
+<p>Load requisite packages and define directories. Note that this script uses my personal utilities package <code>brainstorm</code>, which can be downloaded via <code>devtools::install_github("ayushnoori/brainstorm")</code>.</p>
+<div class="layout-chunk" data-layout="l-body">
+<div class="sourceCode">
+<pre class="sourceCode r"><code class="sourceCode r"><span class='co'># data manipulation</span>
+<span class='kw'><a href='https://rdrr.io/r/base/library.html'>library</a></span><span class='op'>(</span><span class='va'><a href='https://r-datatable.com'>data.table</a></span><span class='op'>)</span>
+<span class='kw'><a href='https://rdrr.io/r/base/library.html'>library</a></span><span class='op'>(</span><span class='va'><a href='http://purrr.tidyverse.org'>purrr</a></span><span class='op'>)</span>
+<span class='kw'><a href='https://rdrr.io/r/base/library.html'>library</a></span><span class='op'>(</span><span class='va'><a href='https://magrittr.tidyverse.org'>magrittr</a></span><span class='op'>)</span>
 
-    setBatchMode(true);
+<span class='co'># spectral clustering</span>
+<span class='kw'><a href='https://rdrr.io/r/base/library.html'>library</a></span><span class='op'>(</span><span class='va'><a href='http://stringr.tidyverse.org'>stringr</a></span><span class='op'>)</span>
+<span class='kw'><a href='https://rdrr.io/r/base/library.html'>library</a></span><span class='op'>(</span><span class='va'>SNFtool</span><span class='op'>)</span>
 
-    input = getDirectory(&quot;Choose input data folder.&quot;);
-    files = getFileList(input);
-    // Array.show(files);
+<span class='co'># heatmap</span>
+<span class='kw'><a href='https://rdrr.io/r/base/library.html'>library</a></span><span class='op'>(</span><span class='va'>pheatmap</span><span class='op'>)</span>
+<span class='kw'><a href='https://rdrr.io/r/base/library.html'>library</a></span><span class='op'>(</span><span class='va'><a href='https://ggplot2.tidyverse.org'>ggplot2</a></span><span class='op'>)</span>
+<span class='kw'><a href='https://rdrr.io/r/base/library.html'>library</a></span><span class='op'>(</span><span class='va'>RColorBrewer</span><span class='op'>)</span>
 
-    dir = &quot;C:/Users/ayush/Dropbox (Partners HealthCare)/Single-Cell Multiplex IHC/Multiplex IHC Project/Multiplex IHC (GitLab)/&quot;;
-    datadir = dir + &quot;Data/2 - Channel Extraction/Microglia/&quot;;
+<span class='co'># utility functions</span>
+<span class='kw'><a href='https://rdrr.io/r/base/library.html'>library</a></span><span class='op'>(</span><span class='va'><a href='https://www.ayushnoori.com/brainstorm'>brainstorm</a></span><span class='op'>)</span>
+</code></pre>
+</div>
+</div>
+<p>Note that directories are relative to the R project path.</p>
+<div class="layout-chunk" data-layout="l-body">
+<div class="sourceCode">
+<pre class="sourceCode r"><code class="sourceCode r"><span class='co'># set directories</span>
+<span class='va'>dir3</span> <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/file.path.html'>file.path</a></span><span class='op'>(</span><span class='st'>"Results"</span>, <span class='st'>"3 - ROI Measurements"</span><span class='op'>)</span>
+<span class='va'>dir4</span> <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/file.path.html'>file.path</a></span><span class='op'>(</span><span class='st'>"Results"</span>, <span class='st'>"4 - Spectral Clustering"</span><span class='op'>)</span>
+</code></pre>
+</div>
+</div>
+<h1 id="load-data">Load Data</h1>
+<p>Load ROI measurement data from the <code>3 - ROI Measurements</code> directory and split by <code>Group</code>.</p>
+<div class="layout-chunk" data-layout="l-body">
+<div class="sourceCode">
+<pre class="sourceCode r"><code class="sourceCode r"><span class='va'>all</span> <span class='op'>=</span> <span class='fu'><a href='https://Rdatatable.gitlab.io/data.table/reference/fread.html'>fread</a></span><span class='op'>(</span><span class='fu'><a href='https://rdrr.io/r/base/file.path.html'>file.path</a></span><span class='op'>(</span><span class='va'>dir3</span>, <span class='st'>"ROI Measurements.csv"</span><span class='op'>)</span><span class='op'>)</span> <span class='op'>%&gt;%</span> <span class='fu'><a href='https://Rdatatable.gitlab.io/data.table/reference/split.html'>split</a></span><span class='op'>(</span><span class='va'>.</span><span class='op'>$</span><span class='va'>Group</span><span class='op'>)</span>
+</code></pre>
+</div>
+</div>
+<h1 id="define-clustering-functions">Define Clustering Functions</h1>
+<p>Define functions to compute spectral clustering using the <code>SNFtool</code> package. Here, <code>affinityCustom</code> is a modified version of <code>affinityMatrix</code> from <code>SNFtool</code> without sparsifying the affinity matrix by a K-nearest neighbors approach (i.e., removing the assumption that local pairwise similarities with high values are more reliable than remote ones).</p>
+<p>Define spectral clustering function.</p>
+<div class="layout-chunk" data-layout="l-body">
+<div class="sourceCode">
+<pre class="sourceCode r"><code class="sourceCode r"><span class='va'>spectral_clustering</span> <span class='op'>=</span> <span class='kw'>function</span><span class='op'>(</span><span class='va'>dat</span>, <span class='va'>lab</span>, <span class='va'>mx</span>, <span class='va'>k</span> <span class='op'>=</span> <span class='fl'>3</span><span class='op'>)</span> <span class='op'>{</span>
+  
+  <span class='co'># print log</span>
+  <span class='fu'><a href='https://rdrr.io/r/base/cat.html'>cat</a></span><span class='op'>(</span><span class='fu'><a href='https://rdrr.io/r/base/paste.html'>paste</a></span><span class='op'>(</span><span class='st'>"\n"</span>, <span class='fu'><a href='https://rdrr.io/r/base/chartr.html'>toupper</a></span><span class='op'>(</span><span class='va'>lab</span><span class='op'>)</span>, <span class='st'>"ANALYSIS\n"</span><span class='op'>)</span><span class='op'>)</span>
+  
+  <span class='co'># calculate distance matrix</span>
+  <span class='va'>distM</span> <span class='op'>=</span> <span class='fu'><a href='https://Rdatatable.gitlab.io/data.table/reference/as.matrix.html'>as.matrix</a></span><span class='op'>(</span><span class='va'>dat</span><span class='op'>[</span>, <span class='va'>..mx</span><span class='op'>]</span><span class='op'>)</span> <span class='op'>%&gt;%</span> <span class='fu'><a href='https://rdrr.io/pkg/SNFtool/man/dist2.html'>dist2</a></span><span class='op'>(</span><span class='va'>.</span>, <span class='va'>.</span><span class='op'>)</span> <span class='op'>%&gt;%</span> <span class='va'>.</span><span class='op'>^</span><span class='op'>(</span><span class='fl'>1</span><span class='op'>/</span><span class='fl'>2</span><span class='op'>)</span>
+  
+  <span class='co'># calculate similarity matrix</span>
+  <span class='va'>simM</span> <span class='op'>=</span> <span class='fu'>affinityCustom</span><span class='op'>(</span><span class='va'>distM</span><span class='op'>)</span>
+  
+  <span class='co'># perform spectral clustering</span>
+  <span class='fu'><a href='https://rdrr.io/r/base/cat.html'>cat</a></span><span class='op'>(</span><span class='fu'><a href='https://rdrr.io/r/base/paste.html'>paste0</a></span><span class='op'>(</span><span class='st'>"- Performing Spectral Clustering, "</span>, <span class='fu'><a href='https://stringr.tidyverse.org/reference/word.html'>word</a></span><span class='op'>(</span><span class='fu'><a href='https://rdrr.io/r/base/Sys.time.html'>Sys.time</a></span><span class='op'>(</span><span class='op'>)</span>, <span class='fl'>2</span><span class='op'>)</span>, <span class='st'>"\n"</span><span class='op'>)</span><span class='op'>)</span>
+  <span class='va'>clust</span> <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/pkg/SNFtool/man/spectralClustering.html'>spectralClustering</a></span><span class='op'>(</span><span class='va'>simM</span>, K <span class='op'>=</span> <span class='va'>k</span><span class='op'>)</span>
+  
+  <span class='co'># add spectral clustering labels to data</span>
+  <span class='va'>dat</span><span class='op'>[</span>, <span class='va'>State</span> <span class='op'>:=</span> <span class='va'>clust</span><span class='op'>]</span>
+  
+  <span class='kw'><a href='https://rdrr.io/r/base/function.html'>return</a></span><span class='op'>(</span><span class='va'>dat</span><span class='op'>)</span>
+  
+<span class='op'>}</span>
+</code></pre>
+</div>
+</div>
+<p>Define function to bin distance, where <code>distlab</code> is a character vector specifying the name of the distance column of interest.</p>
+<div class="layout-chunk" data-layout="l-body">
+<div class="sourceCode">
+<pre class="sourceCode r"><code class="sourceCode r"><span class='va'>bin_distance</span> <span class='op'>=</span> <span class='kw'>function</span><span class='op'>(</span><span class='va'>dat</span>, <span class='va'>distlab</span>,
+                        <span class='va'>distbins</span> <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='fl'>0</span>, <span class='fl'>25</span>, <span class='fl'>50</span><span class='op'>)</span>,
+                        <span class='va'>distlevels</span> <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='st'>"&lt; 25 um"</span>, <span class='st'>"25-50 um"</span>, <span class='st'>"&gt; 50 um"</span><span class='op'>)</span>,
+                        <span class='va'>distna</span> <span class='op'>=</span> <span class='st'>"None"</span><span class='op'>)</span> <span class='op'>{</span>
+  
+  <span class='co'># bin distance labels</span>
+  <span class='va'>dat</span> <span class='op'>%&gt;%</span> 
+    <span class='va'>.</span><span class='op'>[</span>, <span class='va'>TemporaryBin</span> <span class='op'>:=</span> <span class='va'>.SD</span>, .SDcols <span class='op'>=</span> <span class='va'>distlab</span><span class='op'>]</span> <span class='op'>%&gt;%</span>
+    <span class='va'>.</span><span class='op'>[</span>, <span class='va'>TemporaryBin</span> <span class='op'>:=</span> <span class='fu'><a href='https://rdrr.io/r/base/cut.html'>cut</a></span><span class='op'>(</span><span class='va'>TemporaryBin</span>,
+                        breaks <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='va'>distbins</span>, <span class='fu'><a href='https://rdrr.io/r/base/Extremes.html'>max</a></span><span class='op'>(</span><span class='va'>TemporaryBin</span>, na.rm <span class='op'>=</span> <span class='cn'>T</span><span class='op'>)</span><span class='op'>)</span>,
+                        include.lowest <span class='op'>=</span> <span class='cn'>T</span><span class='op'>)</span><span class='op'>]</span> <span class='op'>%&gt;%</span>
+    <span class='va'>.</span><span class='op'>[</span>, <span class='va'>TemporaryBin</span> <span class='op'>:=</span> <span class='fu'><a href='https://rdrr.io/r/base/factor.html'>addNA</a></span><span class='op'>(</span><span class='va'>TemporaryBin</span><span class='op'>)</span><span class='op'>]</span> <span class='op'>%&gt;%</span>
+    <span class='va'>.</span><span class='op'>[</span>, <span class='va'>TemporaryBin</span> <span class='op'>:=</span> <span class='fu'>plyr</span><span class='fu'>::</span><span class='fu'><a href='https://rdrr.io/pkg/plyr/man/mapvalues.html'>mapvalues</a></span><span class='op'>(</span><span class='va'>TemporaryBin</span>, <span class='fu'><a href='https://rdrr.io/r/base/levels.html'>levels</a></span><span class='op'>(</span><span class='va'>TemporaryBin</span><span class='op'>)</span>,
+                                    <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='va'>distlevels</span>, <span class='st'>"None"</span><span class='op'>)</span><span class='op'>)</span><span class='op'>]</span>
+  
+  <span class='co'># group None with &gt; 50 um</span>
+  <span class='va'>dat</span><span class='op'>[</span><span class='va'>TemporaryBin</span> <span class='op'>==</span> <span class='st'>"None"</span>, <span class='va'>TemporaryBin</span> <span class='op'>:=</span> <span class='va'>distna</span><span class='op'>]</span>
+  
+  <span class='co'># rename column</span>
+  <span class='fu'><a href='https://Rdatatable.gitlab.io/data.table/reference/setattr.html'>setnames</a></span><span class='op'>(</span><span class='va'>dat</span>, <span class='st'>"TemporaryBin"</span>, <span class='fu'><a href='https://rdrr.io/r/base/paste.html'>paste0</a></span><span class='op'>(</span><span class='va'>distlab</span>, <span class='st'>"Bin"</span><span class='op'>)</span><span class='op'>)</span>
+  
+  <span class='kw'><a href='https://rdrr.io/r/base/function.html'>return</a></span><span class='op'>(</span><span class='fu'><a href='https://rdrr.io/r/base/invisible.html'>invisible</a></span><span class='op'>(</span><span class='va'>dat</span><span class='op'>)</span><span class='op'>)</span>
+  
+<span class='op'>}</span>
+</code></pre>
+</div>
+</div>
+<p>Define function to (a) prepare data for heatmap by refactoring label, reordering, and binning distance, then (b) plot the heatmap using the <code>pheatmap</code> package.</p>
+<div class="layout-chunk" data-layout="l-body">
+<div class="sourceCode">
+<pre class="sourceCode r"><code class="sourceCode r"><span class='va'>scale_data</span> <span class='op'>=</span> <span class='kw'>function</span><span class='op'>(</span><span class='va'>b</span><span class='op'>)</span> <span class='op'>{</span> <span class='kw'><a href='https://rdrr.io/r/base/function.html'>return</a></span><span class='op'>(</span><span class='fl'>100</span><span class='op'>*</span><span class='op'>(</span><span class='va'>b</span> <span class='op'>-</span> <span class='fu'><a href='https://rdrr.io/r/base/Extremes.html'>min</a></span><span class='op'>(</span><span class='va'>b</span><span class='op'>)</span><span class='op'>)</span><span class='op'>/</span><span class='op'>(</span><span class='fu'><a href='https://rdrr.io/r/base/Extremes.html'>max</a></span><span class='op'>(</span><span class='va'>b</span><span class='op'>)</span> <span class='op'>-</span> <span class='fu'><a href='https://rdrr.io/r/base/Extremes.html'>min</a></span><span class='op'>(</span><span class='va'>b</span><span class='op'>)</span><span class='op'>)</span><span class='op'>)</span> <span class='op'>}</span>
 
+<span class='va'>plot_heatmap</span> <span class='op'>=</span> <span class='kw'>function</span><span class='op'>(</span><span class='va'>dat</span>, <span class='va'>lab</span>, <span class='va'>mx</span>, <span class='va'>hmcols</span>, <span class='va'>hmsel</span><span class='op'>)</span> <span class='op'>{</span>
 
-    ////////////////////////////////////////////////////////////
-    /////  FUNCTION FOR RANDOM ID
-    ////////////////////////////////////////////////////////////
-    
-    function randomString(length, chars) {
-        result = &quot;&quot;;
-        for (i = 0; i &lt; length; i++) {
-            maxlen = lengthOf(chars)-1;
-            rand = round(random * maxlen);
-            result +=  substring(chars, rand, rand+1);
-        }
-        return result;
-    }
-    
+  <span class='co'># subset marker/metadata columns</span>
+  <span class='va'>dat</span> <span class='op'>=</span> <span class='va'>dat</span><span class='op'>[</span>, <span class='va'>.SD</span>, .SDcols <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='va'>mx</span>, <span class='va'>hmsel</span><span class='op'>)</span><span class='op'>]</span>
+  
+  <span class='co'># calculate proportion of control ROIs by state</span>
+  <span class='va'>prop</span> <span class='op'>=</span> <span class='va'>dat</span><span class='op'>[</span>, <span class='fu'><a href='https://rdrr.io/r/base/sum.html'>sum</a></span><span class='op'>(</span><span class='va'>Condition</span> <span class='op'>==</span> <span class='st'>"Control"</span><span class='op'>)</span><span class='op'>/</span><span class='va'>.N</span>, by <span class='op'>=</span> <span class='fu'>.</span><span class='op'>(</span><span class='va'>State</span><span class='op'>)</span><span class='op'>]</span> <span class='op'>%&gt;%</span>
+    <span class='va'>.</span><span class='op'>[</span><span class='fu'><a href='https://Rdatatable.gitlab.io/data.table/reference/setorder.html'>order</a></span><span class='op'>(</span><span class='op'>-</span><span class='va'>V1</span><span class='op'>)</span>, <span class='va'>State</span><span class='op'>]</span>
+  
+  <span class='co'># convert to factor then reorder ROIs</span>
+  <span class='va'>dat</span> <span class='op'>=</span> <span class='va'>dat</span> <span class='op'>%&gt;%</span>
+    <span class='va'>.</span><span class='op'>[</span>, <span class='va'>State</span> <span class='op'>:=</span> <span class='fu'><a href='https://rdrr.io/r/base/factor.html'>factor</a></span><span class='op'>(</span><span class='va'>State</span>, levels <span class='op'>=</span> <span class='va'>prop</span>, labels <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='st'>"Homeostatic"</span>, <span class='st'>"Intermediate"</span>, <span class='st'>"Reactive"</span><span class='op'>)</span><span class='op'>)</span><span class='op'>]</span> <span class='op'>%&gt;%</span>
+    <span class='co'># .[, State := factor(State)] %&gt;%</span>
+    <span class='va'>.</span><span class='op'>[</span>, <span class='va'>Sample</span> <span class='op'>:=</span> <span class='fu'><a href='https://rdrr.io/r/base/factor.html'>factor</a></span><span class='op'>(</span><span class='va'>Sample</span><span class='op'>)</span><span class='op'>]</span> <span class='op'>%&gt;%</span>
+    <span class='va'>.</span><span class='op'>[</span>, <span class='va'>Condition</span> <span class='op'>:=</span> <span class='fu'><a href='https://rdrr.io/r/base/factor.html'>factor</a></span><span class='op'>(</span><span class='va'>Condition</span>, levels <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='st'>"Control"</span>, <span class='st'>"Alzheimer"</span><span class='op'>)</span><span class='op'>)</span><span class='op'>]</span> <span class='op'>%&gt;%</span>
+    <span class='va'>.</span><span class='op'>[</span><span class='fu'><a href='https://Rdatatable.gitlab.io/data.table/reference/setorder.html'>order</a></span><span class='op'>(</span><span class='va'>State</span>, <span class='va'>Condition</span>, <span class='va'>Layer</span>, <span class='fu'><a href='https://rdrr.io/r/stats/Uniform.html'>runif</a></span><span class='op'>(</span><span class='fu'><a href='https://rdrr.io/r/base/nrow.html'>nrow</a></span><span class='op'>(</span><span class='va'>.</span><span class='op'>)</span><span class='op'>)</span><span class='op'>)</span>, <span class='op'>]</span>
+  
+  <span class='co'># calculate distances</span>
+  <span class='va'>dat</span> <span class='op'>=</span> <span class='va'>dat</span> <span class='op'>%&gt;%</span> <span class='fu'>bin_distance</span><span class='op'>(</span><span class='st'>"Distance"</span><span class='op'>)</span>
+  
+  <span class='co'># write file</span>
+  <span class='fu'><a href='https://Rdatatable.gitlab.io/data.table/reference/setcolorder.html'>setcolorder</a></span><span class='op'>(</span><span class='va'>dat</span>, <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='st'>"ID"</span>, <span class='st'>"State"</span><span class='op'>)</span><span class='op'>)</span>
+  <span class='fu'><a href='https://Rdatatable.gitlab.io/data.table/reference/fwrite.html'>fwrite</a></span><span class='op'>(</span><span class='va'>dat</span>, <span class='fu'><a href='https://rdrr.io/r/base/file.path.html'>file.path</a></span><span class='op'>(</span><span class='va'>dir4</span>, <span class='fu'><a href='https://rdrr.io/r/base/paste.html'>paste</a></span><span class='op'>(</span><span class='va'>lab</span>, <span class='st'>"Spectral Clustering.csv"</span><span class='op'>)</span><span class='op'>)</span><span class='op'>)</span>
+  
+  <span class='co'># calculate column gaps</span>
+  <span class='va'>gaps</span> <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/cumsum.html'>cumsum</a></span><span class='op'>(</span><span class='fu'><a href='https://rdrr.io/r/base/summary.html'>summary</a></span><span class='op'>(</span><span class='va'>dat</span><span class='op'>[</span>, <span class='va'>State</span><span class='op'>]</span><span class='op'>)</span><span class='op'>)</span>
+  
+  <span class='co'># prepare for heatmap</span>
+  <span class='va'>hmdat</span> <span class='op'>=</span> <span class='va'>dat</span><span class='op'>[</span>, <span class='va'>..mx</span><span class='op'>]</span> <span class='op'>%&gt;%</span> <span class='fu'><a href='https://purrr.tidyverse.org/reference/map.html'>map_dfc</a></span><span class='op'>(</span><span class='op'>~</span><span class='fu'>scale_data</span><span class='op'>(</span><span class='va'>.x</span><span class='op'>)</span><span class='op'>)</span> <span class='op'>%&gt;%</span> <span class='fu'><a href='https://rdrr.io/r/base/t.html'>t</a></span><span class='op'>(</span><span class='op'>)</span>
+  
+  <span class='co'># select row names and column names</span>
+  <span class='va'>hmannos</span> <span class='op'>=</span> <span class='va'>dat</span><span class='op'>[</span>, <span class='va'>.SD</span>, .SDcols <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='st'>"Layer"</span>, <span class='st'>"Condition"</span>, <span class='st'>"State"</span><span class='op'>)</span><span class='op'>]</span>
+  
+  <span class='co'># group None with &gt; 50</span>
+  <span class='va'>group_none</span> <span class='op'>=</span> <span class='kw'>function</span><span class='op'>(</span><span class='va'>x</span><span class='op'>)</span> <span class='va'>hmannos</span><span class='op'>[</span><span class='fu'><a href='https://rdrr.io/r/base/get.html'>get</a></span><span class='op'>(</span><span class='va'>x</span><span class='op'>)</span> <span class='op'>==</span> <span class='st'>"None"</span>, <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='va'>x</span><span class='op'>)</span> <span class='op'>:=</span> <span class='st'>"&gt; 50 um"</span><span class='op'>]</span>
+  <span class='fu'><a href='https://purrr.tidyverse.org/reference/map.html'>walk</a></span><span class='op'>(</span><span class='va'>hmdists</span>, <span class='va'>group_none</span><span class='op'>)</span>
+  
+  <span class='co'># remove "Bin" label</span>
+  <span class='fu'><a href='https://rdrr.io/r/base/colnames.html'>colnames</a></span><span class='op'>(</span><span class='va'>hmannos</span><span class='op'>)</span> <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/grep.html'>gsub</a></span><span class='op'>(</span><span class='st'>"Bin"</span>, <span class='st'>""</span>, <span class='fu'><a href='https://rdrr.io/r/base/colnames.html'>colnames</a></span><span class='op'>(</span><span class='va'>hmannos</span><span class='op'>)</span>, fixed <span class='op'>=</span> <span class='cn'>T</span><span class='op'>)</span>
+  
+  <span class='co'># set rownames and colnames</span>
+  <span class='fu'><a href='https://rdrr.io/r/base/colnames.html'>colnames</a></span><span class='op'>(</span><span class='va'>hmdat</span><span class='op'>)</span> <span class='op'>=</span> <span class='va'>dat</span><span class='op'>$</span><span class='va'>ID</span>; <span class='fu'><a href='https://rdrr.io/r/base/colnames.html'>rownames</a></span><span class='op'>(</span><span class='va'>hmannos</span><span class='op'>)</span> <span class='op'>=</span> <span class='va'>dat</span><span class='op'>$</span><span class='va'>ID</span>
+                    
+  <span class='co'># plot heatmap</span>
+  <span class='va'>hm</span> <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/pkg/pheatmap/man/pheatmap.html'>pheatmap</a></span><span class='op'>(</span><span class='va'>hmdat</span>,
+                cluster_cols <span class='op'>=</span> <span class='cn'>FALSE</span>, cluster_rows <span class='op'>=</span> <span class='cn'>FALSE</span>,
+                annotation_colors <span class='op'>=</span> <span class='va'>hmcols</span>, annotation_col <span class='op'>=</span> <span class='va'>hmannos</span>,
+                border_color <span class='op'>=</span> <span class='cn'>NA</span>, <span class='co'># main = paste(lab, "Heatmap"),</span>
+                show_colnames <span class='op'>=</span> <span class='cn'>FALSE</span>, gaps_col <span class='op'>=</span> <span class='va'>gaps</span>, silent <span class='op'>=</span> <span class='cn'>TRUE</span><span class='op'>)</span>
+  
+  <span class='fu'><a href='https://ggplot2.tidyverse.org/reference/ggsave.html'>ggsave</a></span><span class='op'>(</span><span class='fu'><a href='https://rdrr.io/r/base/file.path.html'>file.path</a></span><span class='op'>(</span><span class='va'>dir4</span>, <span class='fu'><a href='https://rdrr.io/r/base/paste.html'>paste</a></span><span class='op'>(</span><span class='va'>lab</span>, <span class='st'>"Heatmap.pdf"</span><span class='op'>)</span><span class='op'>)</span>, <span class='va'>hm</span>, width <span class='op'>=</span> <span class='fl'>8</span>, height <span class='op'>=</span> <span class='fl'>6</span><span class='op'>)</span>
+  <span class='fu'><a href='https://ggplot2.tidyverse.org/reference/ggsave.html'>ggsave</a></span><span class='op'>(</span><span class='fu'><a href='https://rdrr.io/r/base/file.path.html'>file.path</a></span><span class='op'>(</span><span class='va'>dir4</span>, <span class='fu'><a href='https://rdrr.io/r/base/paste.html'>paste</a></span><span class='op'>(</span><span class='va'>lab</span>, <span class='st'>"Heatmap.png"</span><span class='op'>)</span><span class='op'>)</span>, <span class='va'>hm</span>, width <span class='op'>=</span> <span class='fl'>8</span>, height <span class='op'>=</span> <span class='fl'>6</span>, dpi <span class='op'>=</span> <span class='fl'>1200</span><span class='op'>)</span>
+  
+  <span class='kw'><a href='https://rdrr.io/r/base/function.html'>return</a></span><span class='op'>(</span><span class='va'>dat</span><span class='op'>)</span>
 
-    ////////////////////////////////////////////////////////////
-    /////  ITERATE OVER IMAGES
-    ////////////////////////////////////////////////////////////
-    
-    for (f = 0; f &lt; files.length; f++) {
+<span class='op'>}</span>
+</code></pre>
+</div>
+</div>
+<h1 id="perform-spectral-clustering">Perform Spectral Clustering</h1>
+<p>Apply <code>spectral_clustering</code> function over ROI measurement data by <code>Type</code>.</p>
+<div class="layout-chunk" data-layout="l-body">
+<div class="sourceCode">
+<pre class="sourceCode r"><code class="sourceCode r"><span class='co'># define markers of interest</span>
+<span class='va'>markers</span> <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span><span class='op'>(</span>Astrocyte <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='st'>"GFAP"</span>, <span class='st'>"YKL40"</span>, <span class='st'>"VIM"</span>, <span class='st'>"TSPO"</span>,
+                             <span class='st'>"EAAT1"</span>, <span class='st'>"EAAT2"</span>, <span class='st'>"GS"</span><span class='op'>)</span>,
+               Microglia <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='st'>"MHC2"</span>, <span class='st'>"CD68"</span>, <span class='st'>"TMEM119"</span>, <span class='st'>"TSPO"</span>, <span class='st'>"FTL"</span><span class='op'>)</span>,
+               Vessel <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='st'>"GFAP"</span>, <span class='st'>"YKL40"</span>, <span class='st'>"VIM"</span>, <span class='st'>"TSPO"</span>, <span class='st'>"EAAT1"</span>, <span class='st'>"EAAT2"</span>, <span class='st'>"GS"</span><span class='op'>)</span><span class='op'>)</span>
 
-        open(input + files[f]);
-        Roi.remove; // remove active selection, if any
-    
-        ////////////////////////////////////////////////////////////
-        /////  LOAD IMAGE + DEFINE MARKERS
-        ////////////////////////////////////////////////////////////
-        
-        image = getTitle(); // get crop title
-        selectImage(image); // shift focus to the selected crop
-        filename = substring(image, 0, indexOf(image, &quot;_Reordered.tif&quot;));
-        
-        splitname = split(filename, &quot;_&quot;);   
-        sample = splitname[0];
-        layer = splitname[1];
-        crop = splitname[2];
-        crop = substring(crop, 4);
-        
-        if (sample == &quot;1190&quot; || sample == &quot;1301&quot; || sample == &quot;1619&quot; || sample == &quot;2169&quot; || sample == &quot;2191&quot; || sample == &quot;2250&quot; || sample == &quot;2274&quot;) {
-            condition = &quot;CTRL&quot;;
-        } else {
-            condition = &quot;AD&quot;;
-        }
-        
-        print(filename);
+<span class='co'># comment out the below lines if you do NOT want to re-run spectral clustering</span>
 
-        ////////////////////////////////////////////////////////////
-        /////  RANDOMIZE CROP
-        ////////////////////////////////////////////////////////////
+<span class='co'># perform spectral clustering with k = 3 clusters</span>
+<span class='va'>all</span> <span class='op'>=</span> <span class='fu'><a href='https://purrr.tidyverse.org/reference/imap.html'>imap</a></span><span class='op'>(</span><span class='va'>all</span>, <span class='op'>~</span><span class='fu'>spectral_clustering</span><span class='op'>(</span><span class='va'>.x</span>, <span class='va'>.y</span>, <span class='va'>markers</span><span class='op'>[[</span><span class='va'>.y</span><span class='op'>]</span><span class='op'>]</span>, <span class='fl'>4</span><span class='op'>)</span><span class='op'>)</span>
 
-        id = randomString(6, &quot;0123456789abcdefghijklmnopqrstuvwxyz&quot;);
-        // print(id);
+<span class='co'># save spectral clustering result</span>
+<span class='fu'><a href='https://rdrr.io/r/base/readRDS.html'>saveRDS</a></span><span class='op'>(</span><span class='va'>all</span>, <span class='fu'><a href='https://rdrr.io/r/base/file.path.html'>file.path</a></span><span class='op'>(</span><span class='va'>dir4</span>, <span class='st'>"Spectral Clustering.rds"</span><span class='op'>)</span><span class='op'>)</span>
 
-        Table.set(&quot;ID&quot;, f, id);
-        Table.set(&quot;Sample&quot;, f, sample);
-        Table.set(&quot;Layer&quot;, f, layer);
-        Table.set(&quot;Crop&quot;, f, crop);
-        Table.set(&quot;Condition&quot;, f, condition);
-        Table.set(&quot;File&quot;, f, filename);
-        Table.update();
-    
-        ////////////////////////////////////////////////////////////
-        /////  SAVE IBA1 CHANNEL
-        ////////////////////////////////////////////////////////////
-        
-        // duplicate IBA1 channel
-        selectImage(image); // shift focus to original
-        run(&quot;Duplicate...&quot;, &quot;title=IBA1 duplicate channels=3&quot;);
+<span class='co'># read spectral clustering result</span>
+<span class='co'># all = readRDS(file.path(dir4, "Spectral Clustering.rds"))</span>
+</code></pre>
+</div>
+</div>
+<h1 id="plot-heatmap">Plot Heatmap</h1>
+<p>Plot data as heatmaps.</p>
+<div class="layout-chunk" data-layout="l-body">
+<div class="sourceCode">
+<pre class="sourceCode r"><code class="sourceCode r"><span class='co'># define metadata of interest for output .csv file</span>
+<span class='va'>sel</span> <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/colnames.html'>colnames</a></span><span class='op'>(</span><span class='va'>all</span><span class='op'>$</span><span class='va'>Astrocyte</span><span class='op'>)</span> <span class='op'>%&gt;%</span> <span class='va'>.</span><span class='op'>[</span><span class='op'>!</span><span class='op'>(</span><span class='va'>.</span> <span class='op'>%in%</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='fu'><a href='https://rdrr.io/r/base/unlist.html'>unlist</a></span><span class='op'>(</span><span class='va'>markers</span><span class='op'>)</span>, <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='st'>"ALDH1L1"</span>, <span class='st'>"Abeta"</span>, <span class='st'>"DAPI"</span>, <span class='st'>"HuC.D"</span>, <span class='st'>"IBA1"</span>, <span class='st'>"PHF1.tau"</span><span class='op'>)</span><span class='op'>)</span><span class='op'>)</span><span class='op'>]</span>
 
-        run(&quot;Enhance Contrast...&quot;, &quot;saturated=0.1&quot;); // only for visualization purposes
-        
-        selectWindow(&quot;IBA1&quot;); // shift focus to original
-        saveAs(&quot;Png&quot;, datadir + condition + &quot;/&quot; + id + &quot;.png&quot;);
-        close();
+<span class='co'># define distance colors</span>
+<span class='va'>distcols</span> <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='st'>'&lt; 25 um'</span> <span class='op'>=</span> <span class='st'>"#FFAF85"</span>, <span class='st'>'25-50 um'</span> <span class='op'>=</span> <span class='st'>"#FFED85"</span>, <span class='st'>'&gt; 50 um'</span> <span class='op'>=</span> <span class='st'>"#96BDD9"</span><span class='op'>)</span>
 
-        selectImage(image);
-        close();
-    
-    }
+<span class='co'># define heatmap color palette</span>
+<span class='va'>cols</span> <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span><span class='op'>(</span>
+  Distance <span class='op'>=</span> <span class='va'>distcols</span>, 
+  Layer <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span>II <span class='op'>=</span> <span class='st'>"#DDF2B2"</span>, III <span class='op'>=</span> <span class='st'>"#8DD2B9"</span>, IV <span class='op'>=</span> <span class='st'>"#39AEC3"</span>, V <span class='op'>=</span> <span class='st'>"#2072B1"</span>, VI <span class='op'>=</span> <span class='st'>"#0C2C84"</span><span class='op'>)</span>,
+  Condition <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span>Control <span class='op'>=</span> <span class='st'>"#377EB8"</span>, Alzheimer <span class='op'>=</span> <span class='st'>"#CE6D8B"</span><span class='op'>)</span>,
+  State <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='st'>'Homeostatic'</span> <span class='op'>=</span> <span class='st'>"#39B200"</span>, <span class='st'>'Intermediate'</span> <span class='op'>=</span> <span class='st'>"#F0C808"</span>, <span class='st'>'Reactive'</span> <span class='op'>=</span> <span class='st'>"#960200"</span><span class='op'>)</span><span class='op'>)</span>
 
-    // save table with mappings
-    Table.save(datadir + &quot;ID Mappings.csv&quot;)
+<span class='co'># plot heatmap data</span>
+<span class='va'>hm</span> <span class='op'>=</span> <span class='fu'><a href='https://purrr.tidyverse.org/reference/imap.html'>imap</a></span><span class='op'>(</span><span class='va'>all</span>, <span class='op'>~</span><span class='fu'>plot_heatmap</span><span class='op'>(</span><span class='va'>.x</span>, <span class='va'>.y</span>, <span class='va'>markers</span><span class='op'>[[</span><span class='va'>.y</span><span class='op'>]</span><span class='op'>]</span>, <span class='va'>cols</span>, <span class='va'>sel</span><span class='op'>)</span><span class='op'>)</span>
 
-}</code></pre>
-<div class="sourceCode" id="cb2"><pre class="sourceCode r distill-force-highlighting-css"><code class="sourceCode r"></code></pre></div>
+<span class='co'># save processed data</span>
+<span class='fu'><a href='https://rdrr.io/r/base/readRDS.html'>saveRDS</a></span><span class='op'>(</span><span class='va'>hm</span>, <span class='fu'><a href='https://rdrr.io/r/base/file.path.html'>file.path</a></span><span class='op'>(</span><span class='va'>dir4</span>, <span class='st'>"Z-Score Data.rds"</span><span class='op'>)</span><span class='op'>)</span>
+</code></pre>
+</div>
+</div>
+<div class="sourceCode" id="cb1"><pre class="sourceCode r distill-force-highlighting-css"><code class="sourceCode r"></code></pre></div>
 <!--radix_placeholder_article_footer-->
 <!--/radix_placeholder_article_footer-->
 </div>

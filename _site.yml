@@ -32,4 +32,30 @@ navbar:
           href: parse-rois
         - text: "ROI Segmentation"
           href: roi-segmentation
+        - text: "Parse ROI Measurements"
+          href: parse-measurements
+    - text: "Unsupervised ML"
+      menu:
+        - text: "Spectral Clustering"
+          href: spectral-clustering
+        - text: "Dimensionality Reduction"
+          href: dimensionality-reduction
+        - text: "Data Visualization"
+          href: data-visualization
+    - text: "Supervised ML"
+      menu:
+        - text: "Partition by Condition"
+          href: partition-condition
+        - text: "Partition by State"
+          href: partition-state
+        - text: "---"
+        - text: "GBM by Condition"
+          href: gbm-condition
+        - text: "GBM by State"
+          href: gbm-state
+        - text: "---"
+        - text: "Astrocyte CNN"
+          href: astrocyte-cnn
+        - text: "Microglia CNN"
+          href: microglia-cnn
 output: distill::distill_article

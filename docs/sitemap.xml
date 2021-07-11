@@ -13,6 +13,26 @@
     <lastmod>2021-07-10T14:36:01-07:00</lastmod>
   </url>
   <url>
+    <loc>https://serranopozolab.org/glia-ihc/astrocyte-cnn.html</loc>
+    <lastmod>2021-07-10T18:07:46-07:00</lastmod>
+  </url>
+  <url>
+    <loc>https://serranopozolab.org/glia-ihc/data-visualization.html</loc>
+    <lastmod>2021-07-10T15:41:26-07:00</lastmod>
+  </url>
+  <url>
+    <loc>https://serranopozolab.org/glia-ihc/dimensionality-reduction.html</loc>
+    <lastmod>2021-07-10T15:35:36-07:00</lastmod>
+  </url>
+  <url>
+    <loc>https://serranopozolab.org/glia-ihc/gbm-condition.html</loc>
+    <lastmod>2021-07-10T15:45:50-07:00</lastmod>
+  </url>
+  <url>
+    <loc>https://serranopozolab.org/glia-ihc/gbm-state.html</loc>
+    <lastmod>2021-07-10T15:46:31-07:00</lastmod>
+  </url>
+  <url>
     <loc>https://serranopozolab.org/glia-ihc/iba1-extraction.html</loc>
     <lastmod>2021-07-10T14:36:21-07:00</lastmod>
   </url>
@@ -21,8 +41,24 @@
     <lastmod>2021-07-10T14:21:52-07:00</lastmod>
   </url>
   <url>
+    <loc>https://serranopozolab.org/glia-ihc/microglia-cnn.html</loc>
+    <lastmod>2021-07-10T18:13:14-07:00</lastmod>
+  </url>
+  <url>
+    <loc>https://serranopozolab.org/glia-ihc/parse-measurements.html</loc>
+    <lastmod>2021-07-10T15:19:20-07:00</lastmod>
+  </url>
+  <url>
     <loc>https://serranopozolab.org/glia-ihc/parse-rois.html</loc>
     <lastmod>2021-07-10T14:42:50-07:00</lastmod>
+  </url>
+  <url>
+    <loc>https://serranopozolab.org/glia-ihc/partition-condition.html</loc>
+    <lastmod>2021-07-10T15:48:44-07:00</lastmod>
+  </url>
+  <url>
+    <loc>https://serranopozolab.org/glia-ihc/partition-state.html</loc>
+    <lastmod>2021-07-10T15:50:15-07:00</lastmod>
   </url>
   <url>
     <loc>https://serranopozolab.org/glia-ihc/phf1-extraction.html</loc>
@@ -35,5 +71,9 @@
   <url>
     <loc>https://serranopozolab.org/glia-ihc/roi-segmentation.html</loc>
     <lastmod>2021-07-10T14:58:43-07:00</lastmod>
+  </url>
+  <url>
+    <loc>https://serranopozolab.org/glia-ihc/spectral-clustering.html</loc>
+    <lastmod>2021-07-10T15:38:40-07:00</lastmod>
   </url>
 </urlset>

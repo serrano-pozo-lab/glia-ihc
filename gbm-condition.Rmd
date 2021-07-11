@@ -1,0 +1,371 @@
+---
+title: "Gradient Boosting Machines by Condition"
+description: |
+ This R script trains gradient boosting machines (GBM) models to perform the binary condition classification task (i.e., predict CTRL vs. AD).
+output:
+  distill::distill_article:
+    toc: true
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(eval = FALSE)
+```
+
+# Dependencies
+
+Load requisite packages and define directories.
+
+```{r load-packages, message=FALSE, warning=FALSE}
+
+# data manipulation
+library(data.table)
+library(purrr)
+library(magrittr)
+
+# data visualization
+library(ggplot2)
+
+# fast file system operations
+library(fs)
+
+# gradient boosted machines
+library(caret)
+library(gbm)
+
+# ROC curve
+library(pROC)
+library(plotROC)
+
+# utility functions
+library(brainstorm)
+
+```
+
+Note that directories are relative to the R project path.
+
+```{r define-directores}
+
+# create file structure
+celltypes = c("Astrocyte", "Microglia", "Vessel") %>% purrr::set_names()
+
+# set directories
+ddir = file.path("Results", "CNN", "1.1 - Condition Partition")
+dir4 = file.path("Results", "4 - Spectral Clustering")
+dir7 = file.path("Results", "7 - Gradient Boosting Machines", "Condition")
+
+# create directory
+if(!dir.exists(dir7)) {dir.create(dir7)}
+
+# set seed
+set.seed(1234)
+
+```
+
+# Load Data
+
+Load processed ROI measurement data from the `4 - Spectral Clustering` directory. **Note that this script uses the same train/test/validation split as the convolutional neural network (CNN) by loading the data object created by the `CNN/1 - Partition ROIs` script.**
+
+```{r load-data}
+
+all = readRDS(file.path(dir4, "Z-Score Data.rds"))
+split = readRDS(file.path(ddir, "ROI Partition by Condition.rds"))
+
+```
+
+# Merge Data
+
+Define function to merge ROI measurement data with the predetermined train/test/validation split.
+
+```{r merge-data}
+
+# function to parse and merge data
+merge_data = function(allx, splitx) {
+  
+  # parse split data
+  splitx = splitx %>%
+    .[, ID := gsub("(\\.tif|AD_|CTRL_)", "", Name)] %>%
+    .[, .(ID, Partition)]
+
+  # merge data
+  allx = merge(allx, splitx, by = "ID", all.x = TRUE, all.y = FALSE)
+  return(allx)
+  
+}
+
+```
+
+Map function over data objects for cell-types with CNN output data.
+
+```{r map-merge}
+
+# function to parse and merge data
+all = map(celltypes, ~merge_data(all[[.x]], split[[.x]]))
+
+```
+
+# Train GBM Model
+
+Define function to plot ROC curves.
+
+```{r plot-roc}
+
+# function to plot ROC
+plot_roc = function(dat, truth, prob, auc_lab) {
+  
+  # print AUC
+  cat(paste0(auc_lab, "\n"))
+  
+  # plot ROC curve
+  p = ggplot(dat, aes(d = get(truth), m = get(prob))) +
+    ggtitle("Gradient Boosting Machines ROC") +
+    geom_abline(aes(intercept = 0, slope = 1, color = "AUC = 0.5"), linetype = "dashed", size = 1)+
+    geom_roc(aes(color = auc_lab), labels = FALSE, pointsize = 0) +
+    geom_roc(linealpha = 0, n.cuts = 12, labelround = 2, labelsize = 3) +
+    scale_colour_manual(values = c("#FF9B71", "#63B0CD")) +
+    labs(x = "1 - Specificity", y = "Sensitivity", color = "Area Under the Curve (AUC)", subtitle = auc_lab) + theme_bw() +
+    theme(plot.title = element_text(size = 16, face = "bold"),
+          plot.subtitle = element_text(face = "italic"),
+          axis.title.x = element_text(size=14, face="bold"),
+          axis.title.y = element_text(size=14, face="bold"),
+          legend.title = element_text(size=12, face="bold"),
+          legend.text = element_text(size=12),
+          legend.position = c(0.72, 0.14),
+          legend.background = element_rect(fill = "white", color = "black"),
+          panel.border = element_rect(color = "black", fill = NA, size = 1))
+  
+  return(p)
+  
+}
+
+```
+
+Function to plot multiple ROC curves including single-marker data.
+
+```{r plot-sm}
+
+# function to plot multiple ROC curves
+plot_roc = function(dat, truth, prob, auc_lab) {
+  
+  # print AUC
+  cat(paste0(auc_lab, "\n"))
+  
+  # plot ROC curve
+  p = ggplot(dat, aes(d = get(truth), m = get(prob))) +
+    ggtitle("Gradient Boosting Machines ROC") +
+    geom_abline(aes(intercept = 0, slope = 1, color = "AUC = 0.5"), linetype = "dashed", size = 1)+
+    geom_roc(aes(color = auc_lab), labels = FALSE, pointsize = 0) +
+    geom_roc(linealpha = 0, n.cuts = 12, labelround = 2, labelsize = 3) +
+    scale_colour_manual(values = c("#FF9B71", "#63B0CD")) +
+    labs(x = "1 - Specificity", y = "Sensitivity", color = "Area Under the Curve (AUC)", subtitle = auc_lab) + theme_bw() +
+    theme(plot.title = element_text(size = 16, face = "bold"),
+          plot.subtitle = element_text(face = "italic"),
+          axis.title.x = element_text(size=14, face="bold"),
+          axis.title.y = element_text(size=14, face="bold"),
+          legend.title = element_text(size=12, face="bold"),
+          legend.text = element_text(size=12),
+          legend.position = c(0.72, 0.14),
+          legend.background = element_rect(fill = "white", color = "black"),
+          panel.border = element_rect(color = "black", fill = NA, size = 1))
+  
+  return(p)
+  
+}
+
+```
+
+Define function to plot variable importance scores.
+
+```{r plot-imp}
+
+# function to plot variable importance
+plot_imp = function(imp) {
+  
+  # convert to data table
+  imp = as.data.table(imp$importance, keep.rownames = "Marker") %>%
+    setnames("Overall", "Importance") %>%
+    .[order(-Importance)] %>%
+    .[, Marker := factor(Marker, levels = rev(Marker))]
+  
+  # plot variable importance
+  p = ggplot(imp, aes(x = Importance, y = Marker, fill = Importance,
+                      label = round(Importance, 2))) +
+    geom_bar(stat = "identity", width = 0.7, color = "black") +
+    scale_fill_gradient(low = "#EADA86", high = "#B67977") +
+    geom_text(size = 3, hjust = 1.2, fontface = "bold")+
+    scale_x_continuous(limits = c(-0.4, max(imp$Importance)), 
+                       expand = expansion(mult = c(0, 0.05))) +
+    theme_bw() +
+    theme(plot.title = element_text(size = 16, hjust = 0.5, face = "bold"),
+          axis.title.y = element_blank(),
+          axis.text.y = element_text(size = 10, color = "black"),
+          axis.title.x = element_text(size = 12, face = "bold"),
+          axis.ticks.x = element_line(color = "black"),
+          axis.ticks.y = element_blank(),
+          panel.border = element_rect(color = "black", fill = NA, size = 1),
+          legend.position = "none")
+  
+  return(p)
+  
+}
+
+```
+
+Define function to train single marker model.
+
+```{r single-marker}
+
+single_marker = function(sm, train_dat, test_dat, tC) {
+  
+  # train model on training set (80%)
+  sm_model = train(x = train_dat[, ..sm], y = train_dat[, Condition],
+                    method = "gbm", trControl = tC)
+  
+  # test model on test set (20%)
+  sm_pred = predict(sm_model, test_dat[, ..sm])
+  sm_cm = confusionMatrix(sm_pred, test_dat[, Condition])
+  sm_prob = data.table(predict(sm_model, test_dat[, ..sm], type = "prob"),
+                        test_dat[, .(Condition)])
+  
+  # calculate AUC
+  sm_roc = roc(response = sm_prob$Condition, predictor = sm_prob$Control)
+  
+  # return output
+  sm_list = list(Prediction = sm_pred, CM = sm_cm, Probs = sm_prob, ROC = sm_roc)
+  return(sm_list)
+  
+}
+
+```
+
+Define function to train the gradient boosting machines (GBM) model and save output.
+
+```{r train-gbm}
+
+train_gbm = function(dat, lab, mx, sm, scols) {
+  
+  # create subdirectory if needed
+  wdir = file.path(dir7, lab)
+  if(!dir.exists(wdir)) {dir.create(wdir)}
+  
+  # partition data into training/test
+  train_dat =  dat[Partition %in% c("Train", "Validation"), ]
+  test_dat = dat[Partition == "Test", ]
+  
+  # establish 10-fold cross validation to determine the out-of-sample error
+  tC = trainControl(method = "cv", number = 10, savePredictions = TRUE,
+                    classProbs = TRUE, verboseIter = TRUE)
+  
+  # estimate pre-processing transformation (centering, scaling, remove zero
+  # variance) from training data, apply to all data
+  normalize = preProcess(train_dat[, ..mx],
+                         method = c("center", "scale", "zv"), verbose = TRUE)
+  train_dat[, (mx) := predict(normalize, train_dat[, mx, with = FALSE])]
+  test_dat[, (mx) := predict(normalize, test_dat[, mx, with = FALSE])]
+  
+  # train model on training set (80%)
+  gbm_model = train(x = train_dat[, ..mx], y = train_dat[, Condition],
+                    method = "gbm", trControl = tC)
+  gbm_imp = varImp(gbm_model, scale = FALSE)
+  
+  # plot variable importance
+  ggsave(file.path(wdir, "Variable Importance.pdf"), plot_imp(gbm_imp),
+         width = 8, height = 2.5 + length(mx)/2)
+  
+  # test model on test set (20%)
+  gbm_pred = predict(gbm_model, test_dat[, ..mx])
+  gbm_cm = confusionMatrix(gbm_pred, test_dat[, Condition])
+  gbm_prob = data.table(predict(gbm_model, test_dat[, ..mx], type = "prob"),
+                        test_dat[, .(Condition)])
+  
+  # calculate AUC
+  roc_calc = roc(response = gbm_prob$Condition, predictor = gbm_prob$Control)
+  roc_plot = plot_roc(gbm_prob, "Condition", "Control",
+                      paste0("AUC = ", round(roc_calc$auc, 4)))
+  
+  # save ROC curve
+  ggsave(file.path(wdir, "ROC Curve.pdf"), roc_plot, width = 6, height = 6)
+  
+  # create single-marker models
+  sm_models = map(sm, ~single_marker(.x, train_dat, test_dat, tC)) %>%
+    purrr::set_names(sm)
+  
+  # plot ROC curve
+  mx_auc_lab = paste0("Multiplex AUC = ", round(roc_calc$auc, 4))
+  sm_p = ggplot(gbm_prob, aes(d = Condition, m = Control)) +
+    ggtitle("Gradient Boosting Machines ROC") +
+    geom_abline(aes(intercept = 0, slope = 1), linetype = "dashed", size = 1, color = "gray")
+  
+  # here, I use the bang-bang operator in quasiquotation (see rlang::nse-force)
+  for(i in 1:length(sm)) {
+    sm_auc_lab = paste0(sm[i], " AUC = ", round(sm_models[[sm[i]]]$ROC$auc, 4))
+    sm_p = sm_p + geom_roc(data = sm_models[[sm[i]]]$Probs, aes(d = Condition, m = Control, color = !!sm_auc_lab), labels = FALSE, pointsize = 0)
+  }
+  
+  sm_p = sm_p +
+    geom_roc(aes(color = mx_auc_lab), labels = FALSE,
+             pointsize = 0) +
+    geom_roc(linealpha = 0, n.cuts = 12, labelround = 2, labelsize = 3) +
+    scale_colour_manual(values = scols) +
+    labs(x = "1 - Specificity", y = "Sensitivity", color = "Area Under the Curve (AUC)", subtitle = mx_auc_lab) + theme_bw() +
+    theme(plot.title = element_text(size = 16, face = "bold"),
+          plot.subtitle = element_text(face = "italic"),
+          axis.title.x = element_text(size=14, face="bold"),
+          axis.title.y = element_text(size=14, face="bold"),
+          legend.title = element_text(size=12, face="bold"),
+          legend.text = element_text(size=12),
+          legend.position = c(0.72, 0.12 + 0.03*length(sm)),
+          legend.background = element_rect(fill = "white", color = "black"),
+          panel.border = element_rect(color = "black", fill = NA, size = 1))
+  
+  # save ROC curve
+  ggsave(file.path(wdir, "Single-Marker ROC Curve.pdf"), sm_p, width = 6, height = 6)
+  
+  # send output to external file
+  logf = file.path(wdir, "GBM Log.txt")
+  if (file.exists(logf)) { file.remove(logf) }
+  
+  # establish sink
+  sink(logf)
+  gbm_model %>%
+    list(., .$results, .$finalModel, gbm_imp,
+         as.matrix(gbm_imp$importance), gbm_cm) %>%
+    walk(., print)
+  sink()
+  
+  # return full list of output
+  return(list(Test = test_dat, Train = train_dat, Model = gbm_model,
+              Prediction = gbm_pred, CM = gbm_cm, Scores = gbm_prob,
+              ROC = roc_calc, Importance = gbm_imp, Baseline = sm_models))
+  
+}
+
+```
+
+# Perform Machine Learning
+
+Train the GBM model by mapping over `all`.
+
+```{r perform-ml}
+
+# define markers of interest
+markers = list(Astrocyte = c("GFAP", "YKL40", "VIM", "TSPO",
+                             "EAAT1", "EAAT2", "GS"),
+               Microglia = c("MHC2", "CD68", "TMEM119", "TSPO", "FTL"),
+               Vessel = c("GFAP", "YKL40", "VIM", "TSPO", "EAAT1", "EAAT2", "GS"))
+
+# single markers
+single_markers = list(Astrocyte = "GFAP",
+                      Microglia = c("CD68", "MHC2"),
+                      Vessel = "GFAP")
+
+single_colors = list(Astrocyte = c("#577399", "#FE7A71"),
+                 Microglia = c("#577399","#BDD5EA", "#FE7A71"),
+                 Vessel = c("#577399", "#FE7A71"))
+
+# train GBM model
+gbm_results = imap(all, ~train_gbm(.x, .y, markers[[.y]], single_markers[[.y]], single_colors[[.y]]))
+
+# save output
+saveRDS(gbm_results, file.path(dir7, "GBM Results.rds"))
+
+```

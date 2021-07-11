@@ -1,0 +1,150 @@
+---
+title: "Partition by Condition"
+description: |
+ This R script partitions the data into training, test, and validation sets using stratified random sampling by condition (i.e., CTRL vs. AD).
+output:
+  distill::distill_article:
+    toc: true
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(eval = FALSE)
+```
+
+# Dependencies
+
+Load requisite packages and define directories. Note that this script uses my personal utilities package brainstorm, which can be downloaded via `devtools::install_github("ayushnoori/brainstorm")`.
+
+```{r load-packages, message=FALSE, warning=FALSE}
+
+# data manipulation
+library(data.table)
+library(purrr)
+library(magrittr)
+
+# fast file system operations
+library(fs)
+
+# partition data
+library(caret)
+
+# utility functions
+library(brainstorm)
+
+```
+
+Note that directories are relative to the R project path.
+
+```{r define-directores}
+
+# set directories
+ddir = file.path("Data", "3 - ROIs")
+pdir = file.path("Data", "4 - Condition Partition")
+dir1 = file.path("Results", "CNN", "1.1 - Condition Partition")
+
+# create file structure
+celltypes = c("Astrocyte", "Microglia", "Vessel") %>% purrr::set_names()
+grp = c("Train", "Test", "Validation") %>% purrr::set_names()
+pheno = c("CTRL", "AD") %>% purrr::set_names()
+dirs = pmap_chr(expand.grid(pdir, celltypes, grp, pheno), file.path)
+
+# remove prior directories/files if they exist
+check_dir = function(fname) {if(fs::dir_exists(fname)) fs::dir_delete(fname); fs::dir_create(fname)}
+walk(dirs, check_dir)
+
+```
+
+# Retrieve ROI Paths
+
+Write function to retrieve ROI paths.
+
+```{r retrieve-paths}
+
+retrieve_paths = function(fname) {
+  
+  # list TIFF files in "/<celltype> ROIs" subdirectories
+  tiffs = map(celltypes, ~paste(.x, "ROIs") %>%
+                file.path(fname, .) %>%
+                list.files(pattern = "\\.tif$", full.names = TRUE))
+  
+  return(tiffs)
+  
+}
+
+```
+
+Then, map function over crop list.
+
+```{r get-paths}
+
+# get crop list
+crops = file.path(ddir, pheno) %>% list.files(full.names = TRUE)
+
+# get TIFF file paths
+tiffs = map(crops, retrieve_paths)
+
+# aggregate TIFF file paths by cell type
+tiffs = map(celltypes, ~unlist(map(tiffs, .x), use.names = FALSE))
+
+```
+
+# Partition ROIs
+
+Define function to partition ROIs into training, test, and validation sets.
+
+```{r partition-rois}
+
+partition_rois = function(flist, lab) {
+  
+  # construct data table
+  dat = data.table(Path = flist)
+  
+  # parse metadata from file path
+  dat %>%
+    .[, Name := basename(Path)] %>% 
+    .[, Group := lab] %>% 
+    .[, Condition := map_chr(strsplit(Path, "/"), 3)] %>%
+    .[, Sample := flist %>% strsplit("/") %>% map_chr(4) %>%
+        strsplit("_") %>% map_chr(1)] %>%
+    .[, Batch := ifelse(Sample %in% c("1190", "1301", "2148", "2157",
+                                      "2191", "2207"), 1, 2)]
+  
+  # partition into test, training, and validation sets
+  train_lab = dat[createDataPartition(Condition, p = 0.6, list = FALSE), Name]
+  test_lab = dat[!Name %in% train_lab] %>%
+    .[createDataPartition(Condition, p = 0.5, list = FALSE), Name]
+  
+  # create partition variable
+  dat %>%
+    .[, Partition := "Validation"] %>%
+    .[Name %in% train_lab, Partition := "Train"] %>%
+    .[Name %in% test_lab, Partition := "Test"] 
+  
+  # construct output path
+  dat[, Output := file.path(pdir, Group, Partition, Condition, Name)]
+  
+  # copy TIFF files to appropriate output folder
+  pwalk(dat[, .(Path, Output)], ~fs::file_copy(.x, .y))
+  
+  # print results
+  cat(paste("\n", lab, "ROIs:\n"))
+  walk(dat[, .(Condition, Partition, Sample)], ~print(summary(factor(.x))))
+
+  # return data table
+  return(dat)
+  
+}
+
+```
+
+Map function over TIFF file paths.
+
+```{r apply-partition}
+
+# partition ROIs
+all = imap(tiffs, partition_rois)
+
+# save partition result
+saveRDS(all, file.path(dir1, "ROI Partition by Condition.rds"))
+
+```

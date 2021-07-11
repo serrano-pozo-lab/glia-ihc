@@ -1,0 +1,401 @@
+---
+title: "Parse ROI Measurements"
+description: |
+ This R script parses the measurements obtained from the previous ROI segmentation script in ImageJ.
+output:
+  distill::distill_article:
+    toc: true
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(eval = FALSE)
+```
+
+# Dependencies
+
+Load requisite packages and define directories. Note that this script uses my personal utilities package `brainstorm`, which can be downloaded via `devtools::install_github("ayushnoori/brainstorm")`.
+
+```{r load-packages, message=FALSE, warning=FALSE}
+
+# data manipulation
+library(data.table)
+library(purrr)
+library(magrittr)
+
+# data visualization
+library(ggplot2)
+
+# Excel manipulation
+library(openxlsx)
+
+# utility functions
+library(brainstorm)
+
+```
+
+Note that directories are relative to the R project path.
+
+```{r define-directores}
+
+# set directories
+ddir = file.path("Data", "3 - ROIs")
+dir3 = file.path("Results", "3 - ROI Measurements")
+dir3.1 = file.path(dir3, "3.1 - Normalization Plots")
+
+```
+
+# Define Functions
+
+Define function to retrieve the coordinate data, then convert from pixels to microns based on the crop resolution metadata.
+
+```{r get-coordinates}
+
+get_coordinates = function(cname, fname) {
+  
+  # read coordinate and resolution data
+  coords = fread(file.path(fname, paste0(cname, "_ROIs.csv")))
+  res = fread(file.path(fname, paste0(cname, "_Resolution.txt")))$V1
+  
+  # calculate center of VIA annotation relative to crop
+  coords %>%
+    .[, CenterX := X + Width/2] %>%
+    .[, CenterY := Y + Height/2]
+  
+  # convert coordinates from pixels to microns (approx. 6.1 pixels : 1 micron)
+  coords[, c("Width", "Height", "CenterX", "CenterY") := map(.(Width, Height, CenterX, CenterY), ~.x/res)]
+  
+  # replace old X and Y coordinates with new coordinates
+  coords = coords[, .(Name, Width, Height, CenterX, CenterY,
+                      Type, Quality, Annotator)]
+  setnames(coords, c("CenterX", "CenterY"), c("X", "Y"))
+  
+  return(coords)
+  
+}
+
+```
+
+Define function to calculate the distance to the nearest plaque or tangle, where `coord` is the coordinate pair for a specific ROI, while `neuropath` is a `data.table` containing parsed plaque and/or tangle ROI data. Note that distances cannot be less than `0`. Also, the `Radius` for tangle ROIs is set to `0` in the subsequent chunk.
+
+```{r compute-distance}
+
+# function to compute distance
+compute_distance = function(x, y, neuropath) {
+  
+  if(nrow(neuropath) == 0) return(NA) else {
+    
+    neuropath = neuropath %>% 
+    .[, Raw := sqrt((X - x)^2 + (Y - y)^2)] %>%
+    .[, Distance := Raw - Radius] %>%
+    .[Distance < 0, Distance := 0]
+  
+  return(neuropath[, min(Distance)]) 
+    
+  }
+  
+}
+
+# function to assign distance based on filter, which must be wrapped in expr()
+assign_distance = function(listobj, lab, filter) { 
+  
+  # list contains both data and neuropathology objects
+  dat = listobj[[1]]
+  neuropath = listobj[[2]]
+  
+  # assign distance
+  dat[, (lab) := pmap_dbl(dat[, .(X, Y)], ~compute_distance(.x, .y, neuropath[eval(filter), ]))]
+  
+  # return new list
+  return(invisible(list(dat, neuropath)))
+  
+}
+
+```
+
+Define function to extract and aggregate ROI data from individual crops.
+
+```{r parse-crop}
+
+parse_crop = function(fname) {
+  
+  # extract crop attributes
+  cinfo = strsplit(fname, "/")[[1]]
+  cname = cinfo[4]; csplit = strsplit(cname, "_")[[1]]
+  message(paste(c("-", csplit), collapse = " "))
+  
+  # read and parse data
+  dat = fread(file.path(fname, paste0(cname, "_Measurements.csv"))) %>% 
+    .[, ROI := map_chr(strsplit(Label, ":"), 1)] %>%
+    .[, Marker := map_chr(strsplit(Label, ":"), 3)]
+  
+  # reshape data from long to wide to extract MGI
+  wdat = dat[, .(ROI, Marker, Mean)] %>% dcast(ROI ~ ..., value.var = "Mean")
+  
+  # keep Area and Perimeter variables, overwrite long data
+  dat = dat[!duplicated(ROI), .(ROI, Area, Perim.)] %>% 
+    merge(wdat, ., by = "ROI", all.x = TRUE)
+    
+  # populate with metadata
+  dat %>%
+    .[, ID := paste(cname, ROI, sep="_")] %>%
+    .[, Group := gsub("[0-9]", "", ROI)] %>%
+    .[, Number := as.numeric(gsub("[a-zA-Z]", "", ROI))] %>%
+    .[, Condition := cinfo[3]] %>%
+    .[, Sample := csplit[1]] %>%
+    .[, Layer := gsub("Layer", "", csplit[2])] %>%
+    .[, Crop := gsub("crop", "", csplit[3])]
+  
+  # join coordinates with ROI measurements
+  dat = get_coordinates(cname, fname) %>% 
+    merge(dat, ., by.x = "ROI", by.y = "Name", all.x = TRUE)
+  
+  # separate neuropathology ROIs and calculate radius
+  neuropath = dat %>%
+    .[Group %in% c("Plaque", "Tangle"), ] %>%
+    .[, .(Group, Type, ROI, Area, X, Y, Width, Height)] %>%
+    .[, Radius := sqrt(Area/pi)] %>%
+    .[Group == "Tangle", Radius := 0]
+  
+  # remove neuropathology
+  dat = dat[!(Group %in% c("Plaque", "Tangle")), ]
+  
+  # compute distance
+  list(dat, neuropath) %>%
+    assign_distance("Distance", expr(Group %in% c("Plaque", "Tangle"))) %>%
+    assign_distance("Plaque", expr(Group == "Plaque")) %>%
+    assign_distance("Large", expr(Group == "Plaque" & Area > 50)) %>%
+    assign_distance("Compact", expr(Group == "Plaque" & Type == "compact")) %>%
+    assign_distance("Diffuse", expr(Group == "Plaque" & Type == "diffuse")) %>%
+    assign_distance("Tangle", expr(Group == "Tangle")) %>%
+    assign_distance("Intraneuronal", expr(Group == "Tangle" & Type == "intra")) %>%
+    assign_distance("Extraneuronal", expr(Group == "Tangle" & Type == "extra"))
+  
+  # set column order
+  setcolorder(dat, c("ROI", "ID", "Group", "Number", "Condition",
+                     "Sample", "Layer", "Crop"))
+  
+  return(dat[, ROI := NULL])
+  
+}
+
+```
+
+# Parse ImageJ ROI Data
+
+Map the `parse_crop` function over the list of crops measured by ImageJ.
+
+```{r map-crops}
+
+# get crop list
+crops = list.files(file.path(ddir, c("CTRL", "AD")), full.names = TRUE)
+
+# map over crop list
+message("Parsing ROI Data:")
+output = map_dfr(crops, ~parse_crop(.x))
+
+# convert condition factor and order ROIs
+output = output %>%
+  .[, Condition := factor(Condition, levels = c("CTRL", "AD"), labels = c("Control", "Alzheimer"))] %>%
+  .[order(Condition, Sample, Layer, Crop, Group, Number), ]
+
+```
+
+# Normalize Data
+
+Rename certain columns to create syntactically valid names.
+
+```{r clean-data}
+
+# rename specific columns
+setnames(output, c("Ferritin", "HuC/D", "PHF1-tau", "Vimentin", "Perim."), c("FTL", "HuC.D", "PHF1.tau", "VIM", "Perimeter"))
+
+# get marker list
+metadata = c("ID", "Group", "Number", "Condition", "Sample", "Layer", "Crop",
+             "Area", "Perimeter", "Width", "Height", "X", "Y", "Type", "Quality",
+             "Annotator", "Distance", "Plaque", "Large", "Compact",
+             "Diffuse", "Tangle", "Intraneuronal", "Extraneuronal")
+markers = colnames(output) %>% .[!(. %in% metadata)]
+
+```
+
+Normalize mean gray intensity (MGI) values by applying a `log`-transformation and computing z-scores.
+
+```{r normalize-data}
+
+# function to compute z-scores.
+compute_z = function(x) { return((x-mean(x))/sd(x)) }
+
+# copy non-normalized data
+raw = copy(output)
+
+# normalize data
+output[, (markers) := map_dfc(.SD, ~compute_z(log(.x + 1))),
+       .SDcols = markers, by = .(Group)]
+
+# show output
+show_table(output[, map(.SD, ~mean(.x)), .SDcols = markers, by = Group])
+show_table(output[, map(.SD, ~sd(.x)), .SDcols = markers, by = Group])
+
+```
+
+# Save Data
+
+Save output and display table. Tables in Excel are styled with the `openxlsx` package. Visualize data normalization by plotting histograms of raw and normalized MGI values.
+
+```{r save-output}
+
+fwrite(output, file.path(dir3, "ROI Measurements.csv"))
+
+show_table(output[sample(nrow(output), 40), ])
+
+```
+
+Plot histograms of before and after normalization.
+
+```{r plot-normalization}
+
+plot_data = function(dat_long, lab) {
+  
+  p = ggplot(dat_long, aes(x = value, fill = Condition)) +
+    geom_histogram(bins = 30, alpha = 0.5, color = "black") +
+    facet_wrap(~ variable, ncol = 6, scales = "free") +
+    scale_fill_manual(values = c("#377EB8", "#CE6D8B")) + 
+    labs(title = lab,
+         x = "Normalized Mean Gray Intensity",
+         y = "Frequency",
+         fill = "Condition") +
+    theme(plot.title = element_text(hjust = 0.5, size = 16, face="bold"),
+          axis.title.x = element_text(size=14, face="bold"),
+          axis.title.y = element_text(size=14, face="bold"),
+          legend.title = element_text(size=12, face="bold"),
+          legend.text = element_text(size=10), legend.position = "bottom",
+          strip.text = element_text(size=10, face="bold"),
+          strip.background = element_rect(color="black", fill="#D9D9D9",
+                                          size=1, linetype="solid"),
+          panel.border = element_rect(color = "black", fill = NA, size = 1))
+  
+}
+
+# plot raw data
+raw_long = melt(raw, id.vars = c("ID", "Condition", "Group"),
+                measure.vars = markers)
+raw_plot = plot_data(raw_long, "Pre-Normalization Histograms")
+print(raw_plot)
+ggsave(file.path(dir3, "Pre-Normalization Histograms.pdf"),
+       raw_plot, width = 24, height = 12)
+
+# plot normalized data
+output_long = melt(output, id.vars = c("ID", "Condition", "Group"),
+                   measure.vars = markers)
+output_plot = plot_data(output_long, "Post-Normalization Histograms")
+print(output_plot)
+ggsave(file.path(dir3, "Post-Normalization Histograms.pdf"),
+       output_plot, width = 24, height = 12)
+
+```
+
+Save data to a formatted Excel file for readability.
+
+```{r write-excel}
+
+# create workbook
+wb = createWorkbook()
+sname = "ROI Measurements"
+
+# header for metadata
+hs1 = createStyle(fgFill = "#A37C40", fontColour = "#FFFFFF", fontName = "Arial Black", halign = "center", valign = "center", textDecoration = "Bold", border = "Bottom", borderStyle = "thick", fontSize = 14)
+
+# header for markers
+hs2 = createStyle(fgFill = "#1D3557", fontColour = "#FFFFFF", fontName = "Arial Black", halign = "center", valign = "center", textDecoration = "Bold", border = "Bottom", borderStyle = "thick", fontSize = 14)
+
+# create worksheet
+tcols = ncol(output)
+addWorksheet(wb, sheetName = sname)
+writeDataTable(wb, sname, x = output, tableStyle = "TableStyleMedium15",
+               bandedRows = FALSE)
+setColWidths(wb, sname, cols = 1:tcols, widths = "auto")
+setColWidths(wb, sname, cols = 8:24, widths = 12)
+setColWidths(wb, sname, cols = 25:26, widths = 14)
+setColWidths(wb, sname, cols = 27:28, widths = 18)
+setColWidths(wb, sname, cols = 34:tcols, widths = 22)
+setRowHeights(wb, sname, rows = (1:nrow(output))+1, heights = 18)
+freezePane(wb, sname, firstActiveRow = 2, firstActiveCol = 8)
+
+# style headers
+addStyle(wb, sname, hs1, rows = 1, cols = c(1:7, 25:tcols))
+addStyle(wb, sname, hs2, rows = 1, cols = 8:24)
+
+# style marker data
+addStyle(wb, sname, createStyle(fontColour = "#1A1D23", fgFill = "#FFFFFF",
+                                fontName = "Arial", fontSize = 10,
+                                halign = "center", valign = "center"),
+         rows = which(1:nrow(output) %% 2 == 0) + 1, cols = 8:24, gridExpand = TRUE)
+
+addStyle(wb, sname, createStyle(fontColour = "#1A1D23", fgFill = "#F3F4F6",
+                                fontName = "Arial", fontSize = 10,
+                                halign = "center", valign = "center"),
+         rows = which(1:nrow(output) %% 2 != 0) + 1, cols = 8:24, gridExpand = TRUE)
+
+# style other columns
+addStyle(wb, sname, createStyle(fontColour = "#1A1D23", fgFill = "#F6F4F4",
+                                fontName = "Arial", fontSize = 10,
+                                halign = "center", valign = "center"),
+         rows = 1:nrow(output) + 1, cols = c(1:7, 25:tcols), gridExpand = TRUE)
+
+# style metadata
+
+# astrocyte metadata
+addStyle(wb, sname, createStyle(fontColour = "#1A1D23", fgFill = "#FDEDEE",
+                                fontName = "Arial", fontSize = 10,
+                                halign = "center", valign = "center"),
+         rows = which(output$Group == "Astrocyte") + 1, cols = c(1:7),
+         gridExpand = TRUE)
+
+# astrocyte header
+addStyle(wb, sname, createStyle(fontColour = "#FFFFFF", fgFill = "#C98686",
+                                fontName = "Arial", textDecoration = "Bold",
+                                fontSize = 10, halign = "center",
+                                valign = "center"),
+         rows = which(output$Group == "Astrocyte") + 1, cols = 2,
+         gridExpand = TRUE)
+
+# microglia metadata
+addStyle(wb, sname, createStyle(fontColour = "#1A1D23", fgFill = "#F4F6F4",
+                                fontName = "Arial", fontSize = 10,
+                                halign = "center", valign = "center"),
+         rows = which(output$Group == "Microglia") + 1, cols = c(1:7),
+         gridExpand = TRUE)
+
+# microglia header
+addStyle(wb, sname, createStyle(fontColour = "#FFFFFF", fgFill = "#708B75",
+                                fontName = "Arial", textDecoration = "Bold",
+                                fontSize = 10, halign = "center",
+                                valign = "center"),
+         rows = which(output$Group == "Microglia") + 1, cols = 2,
+         gridExpand = TRUE)
+
+# vessel metadata
+addStyle(wb, sname, createStyle(fontColour = "#1A1D23", fgFill = "#F1F6F9",
+                                fontName = "Arial", fontSize = 10,
+                                halign = "center", valign = "center"),
+         rows = which(output$Group == "Vessel") + 1, cols = c(1:7),
+         gridExpand = TRUE)
+
+# vessel header
+addStyle(wb, sname, createStyle(fontColour = "#FFFFFF", fgFill = "#457B9D",
+                                fontName = "Arial", textDecoration = "Bold",
+                                fontSize = 10, halign = "center",
+                                valign = "center"),
+         rows = which(output$Group == "Vessel") + 1, cols = 2, gridExpand = TRUE)
+
+# add conditional formatting
+for(i in 34:tcols) {
+  conditionalFormatting(wb, sname, cols = i, rows = 1:nrow(output) + 1,
+                        type = "colourScale",
+                        style = c("#D9A3A3", "#F8F6F6", "#8DAE93"))
+}
+  
+# save workbook
+saveWorkbook(wb, file.path(dir3, "ROI Measurements.xlsx"), overwrite = TRUE)
+
+```
