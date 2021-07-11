@@ -18,6 +18,12 @@ To run our code, please install the following dependencies:
 
 Additional required libraries are specified in each script. Image segmentation was performed with the FIJI distribution of the open-source Java-based image analysis program ImageJ. Convolutional neural networks (CNN) were constructed using the PyTorch open-source deep learning library in the Python programming language (version 3.8.5). Unless otherwise indicated, all other analyses were performed in the R programming language and statistical computing environment (version 4.1.0).
 
+## Workflow
+
+Please see the analysis workflow below.
+
+<img src="https://github.com/serrano-pozo-lab/glia-ihc/blob/main/images/flowchart.svg" width="100%">
+
 ## Documentation
 
 To read our documented code, please visit [www.serranopozolab.org/glia-ihc](https://www.serranopozolab.org/glia-ihc).
