@@ -1,7 +1,7 @@
 ---
 title: "Spectral Clustering"
 description: |
- This R script performs unsupervised spectral clustering to investigate the existence of diverse phenotypes of astrocytes and microglia in Alzheimer's.
+ This R script performs unsupervised spectral clustering to investigate the existence of diverse phenotypes of astrocytes and microglia in control and AD brains.
 output:
   distill::distill_article:
     toc: true

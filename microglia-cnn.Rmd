@@ -65,8 +65,8 @@ def tocpu(x):
 The order of astrocyte markers (out of 17 markers in the original crops) prior to data transformation is specified below, used in the `select_channels()` function (zero-indexed).
 
 | DAPI | IBA1 | MHC2 | CD68 | TMEM119 | TSPO | FTL |
-|------|------|------|------|---------|------|-----|
-| 1    | 3    | 5    | 9    | 8       | 6    | 12  |
+|:----:|:----:|:----:|:----:|:-------:|:----:|:---:|
+|  1   |  3   |  5   |  9   |    8    |  6   | 12  |
 
 ```{python}
 
