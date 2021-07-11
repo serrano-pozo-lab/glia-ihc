@@ -1,4 +1,4 @@
-# Cyclic multiplex fluorescent immunohistochemistry and machine learning reveal distinct states of astrocytes and microglia in normal aging and Alzheimer’s disease.
+# Cyclic Multiplex Fluorescent Immunohistochemistry and Machine Learning Reveal Distinct States of Astrocytes and Microglia in Normal Aging and Alzheimer’s Disease
 
 ## About
 
