@@ -3,6 +3,7 @@ title: "Convolutional Neural Network for Microglia Classification"
 description: |
  This Python script trains a convolutional neural network to predict diagnosis (i.e., CTRL vs. AD) at the single-microglia level using raw image features.
 bibliography: glia-ihc-bibliography.bib
+csl: https://www.zotero.org/styles/nature-communications
 author:
   - first_name: "Ayush"
     last_name: "Noori"

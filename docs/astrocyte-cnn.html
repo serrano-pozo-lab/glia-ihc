@@ -56,7 +56,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 }
 code span.al { color: #ad0000; } /* Alert */
 code span.an { color: #5e5e5e; } /* Annotation */
-code span.at { color: #20794d; } /* Attribute */
+code span.at { } /* Attribute */
 code span.bn { color: #ad0000; } /* BaseN */
 code span.bu { } /* BuiltIn */
 code span.cf { color: #007ba5; } /* ControlFlow */
@@ -77,12 +77,34 @@ code span.kw { color: #007ba5; } /* Keyword */
 code span.op { color: #5e5e5e; } /* Operator */
 code span.ot { color: #007ba5; } /* Other */
 code span.pp { color: #ad0000; } /* Preprocessor */
-code span.sc { color: #20794d; } /* SpecialChar */
+code span.sc { color: #5e5e5e; } /* SpecialChar */
 code span.ss { color: #20794d; } /* SpecialString */
 code span.st { color: #20794d; } /* String */
 code span.va { color: #111111; } /* Variable */
 code span.vs { color: #20794d; } /* VerbatimString */
 code span.wa { color: #5e5e5e; font-style: italic; } /* Warning */
+</style>
+
+<style>
+  div.csl-bib-body { }
+  div.csl-entry {
+    clear: both;
+    }
+  .hanging div.csl-entry {
+    margin-left:2em;
+    text-indent:-2em;
+  }
+  div.csl-left-margin {
+    min-width:2em;
+    float:left;
+  }
+  div.csl-right-inline {
+    margin-left:2em;
+    padding-left:1em;
+  }
+  div.csl-indent {
+    margin-left: 2em;
+  }
 </style>
 
   <!--radix_placeholder_meta_tags-->
@@ -118,7 +140,7 @@ code span.wa { color: #5e5e5e; font-style: italic; } /* Warning */
   <!--radix_placeholder_rmarkdown_metadata-->
 
   <script type="text/json" id="radix-rmarkdown-metadata">
-  {"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["title","description","bibliography","author","output"]}},"value":[{"type":"character","attributes":{},"value":["Convolutional Neural Network for Astrocyte Classification"]},{"type":"character","attributes":{},"value":["This Python script trains a convolutional neural network to predict diagnosis (i.e., CTRL vs. AD) at the single-astrocyte level using raw image features.\n"]},{"type":"character","attributes":{},"value":["glia-ihc-bibliography.bib"]},{"type":"list","attributes":{},"value":[{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["first_name","last_name","url","affiliation","affiliation_url","orcid_id"]}},"value":[{"type":"character","attributes":{},"value":["Ayush"]},{"type":"character","attributes":{},"value":["Noori"]},{"type":"character","attributes":{},"value":["https://www.github.com/ayushnoori"]},{"type":"character","attributes":{},"value":["Massachusetts General Hospital"]},{"type":"character","attributes":{},"value":["https://www.serranopozolab.org"]},{"type":"character","attributes":{},"value":["0000-0003-1420-1236"]}]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["first_name","last_name","affiliation","affiliation_url","orcid_id"]}},"value":[{"type":"character","attributes":{},"value":["Colin"]},{"type":"character","attributes":{},"value":["Magdamo"]},{"type":"character","attributes":{},"value":["Massachusetts General Hospital"]},{"type":"character","attributes":{},"value":["https://www.massgeneral.org/neurology/research/mind-data-science-lab"]},{"type":"character","attributes":{},"value":["0000-0001-8965-4630"]}]}]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["distill::distill_article"]}},"value":[{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["toc"]}},"value":[{"type":"logical","attributes":{},"value":[true]}]}]}]}
+  {"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["title","description","bibliography","csl","author","output"]}},"value":[{"type":"character","attributes":{},"value":["Convolutional Neural Network for Astrocyte Classification"]},{"type":"character","attributes":{},"value":["This Python script trains a convolutional neural network to predict diagnosis (i.e., CTRL vs. AD) at the single-astrocyte level using raw image features.\n"]},{"type":"character","attributes":{},"value":["glia-ihc-bibliography.bib"]},{"type":"character","attributes":{},"value":["https://www.zotero.org/styles/nature-communications"]},{"type":"list","attributes":{},"value":[{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["first_name","last_name","url","affiliation","affiliation_url","orcid_id"]}},"value":[{"type":"character","attributes":{},"value":["Ayush"]},{"type":"character","attributes":{},"value":["Noori"]},{"type":"character","attributes":{},"value":["https://www.github.com/ayushnoori"]},{"type":"character","attributes":{},"value":["Massachusetts General Hospital"]},{"type":"character","attributes":{},"value":["https://www.serranopozolab.org"]},{"type":"character","attributes":{},"value":["0000-0003-1420-1236"]}]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["first_name","last_name","affiliation","affiliation_url","orcid_id"]}},"value":[{"type":"character","attributes":{},"value":["Colin"]},{"type":"character","attributes":{},"value":["Magdamo"]},{"type":"character","attributes":{},"value":["Massachusetts General Hospital"]},{"type":"character","attributes":{},"value":["https://www.massgeneral.org/neurology/research/mind-data-science-lab"]},{"type":"character","attributes":{},"value":["0000-0001-8965-4630"]}]}]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["distill::distill_article"]}},"value":[{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["toc"]}},"value":[{"type":"logical","attributes":{},"value":[true]}]}]}]}
   </script>
   <!--/radix_placeholder_rmarkdown_metadata-->
   <!--radix_placeholder_navigation_in_header-->
@@ -1613,7 +1635,10 @@ code span.wa { color: #5e5e5e; font-style: italic; } /* Warning */
 
       // hoverable references
       $('span.citation[data-cites]').each(function() {
-        var refHtml = $('#ref-' + $(this).attr('data-cites')).html();
+        var refs = $(this).attr('data-cites').split(" ");
+        var refHtml = refs.map(function(ref) {
+          return "<p>" + $('#ref-' + ref).html() + "</p>";
+        }).join("\n");
         window.tippy(this, {
           allowHTML: true,
           content: refHtml,
@@ -2171,7 +2196,7 @@ code span.wa { color: #5e5e5e; font-style: italic; } /* Warning */
     color: var(--hover-color, white);
   }</style>
   <!--/radix_placeholder_distill-->
-  <script src="site_libs/header-attrs-2.9/header-attrs.js"></script>
+  <script src="site_libs/header-attrs-2.9.2/header-attrs.js"></script>
   <script src="site_libs/popper-2.6.0/popper.min.js"></script>
   <link href="site_libs/tippy-6.2.7/tippy.css" rel="stylesheet" />
   <link href="site_libs/tippy-6.2.7/tippy-light-border.css" rel="stylesheet" />
@@ -2361,18 +2386,7 @@ Supervised ML
 </div>
 <h1 id="define-data-transformations">Define Data Transformations</h1>
 <p>The order of astrocyte markers (out of 17 markers in the original crops) prior to data transformation is specified below, used in the <code>select_channels()</code> function (zero-indexed).</p>
-<table style="width:97%;">
-<colgroup>
-<col style="width: 9%" />
-<col style="width: 13%" />
-<col style="width: 9%" />
-<col style="width: 11%" />
-<col style="width: 9%" />
-<col style="width: 9%" />
-<col style="width: 11%" />
-<col style="width: 11%" />
-<col style="width: 11%" />
-</colgroup>
+<table>
 <thead>
 <tr class="header">
 <th style="text-align: center;">DAPI</th>
@@ -2582,7 +2596,7 @@ Supervised ML
 <span id="cb6-91"><a href="#cb6-91" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> x</span></code></pre></div>
 </div>
 <p>Here, the loss function is defined as cross-entropy loss. The loss function is defined as cross-entropy loss. Cross-entropy is a measure from the field of information theory to calculate the difference between two probability distributions.</p>
-<p>The optimizer, learning rate, and weight decay are set as tunable hyperparameters. Of note, one of the possible optimizers is the <a href="https://machinelearningmastery.com/adam-optimization-algorithm-for-deep-learning/" title="See explanation here!">Adam optimization algorithm</a>, a variant of stochastic gradient descent (SGD). Adam was introduced in <span class="citation" data-cites="kingma_adam_2017"><a href="#ref-kingma_adam_2017" role="doc-biblioref">Kingma and Ba</a> (<a href="#ref-kingma_adam_2017" role="doc-biblioref">2017</a>)</span> as follows:</p>
+<p>The optimizer, learning rate, and weight decay are set as tunable hyperparameters. Of note, one of the possible optimizers is the <a href="https://machinelearningmastery.com/adam-optimization-algorithm-for-deep-learning/" title="See explanation here!">Adam optimization algorithm</a>, a variant of stochastic gradient descent (SGD). Adam was introduced in<span class="citation" data-cites="kingma_adam_2017"><sup><a href="#ref-kingma_adam_2017" role="doc-biblioref">1</a></sup></span> as follows:</p>
 <blockquote>
 <p>“We introduce Adam, an algorithm for first-order gradient-based optimization of stochastic objective functions, based on adaptive estimates of lower-order moments. The method computes individual adaptive learning rates for different parameters from estimates of first and second moments of the gradients.”</p>
 </blockquote>
@@ -2651,7 +2665,7 @@ Supervised ML
 <span id="cb8-45"><a href="#cb8-45" aria-hidden="true" tabindex="-1"></a>            running_loss <span class="op">=</span> <span class="fl">0.0</span></span>
 <span id="cb8-46"><a href="#cb8-46" aria-hidden="true" tabindex="-1"></a>            start_time <span class="op">=</span> time.time()</span></code></pre></div>
 </div>
-<p>This is the central function which implements the model training loop. The Optuna optimizer maximizes the out-of-sample area under the receiver operating characteristic (ROC) curve (AUC), which is determined by 3-fold cross-validation using the <code>scikit-learn</code> cross-validator within the 80% training set for each Optuna trial (i.e., Bayesian meta-optimization) <span class="citation" data-cites="pedregosa_scikit_2011">(<a href="#ref-pedregosa_scikit_2011" role="doc-biblioref">Pedregosa et al. 2011</a>)</span>.</p>
+<p>This is the central function which implements the model training loop. The Optuna optimizer maximizes the out-of-sample area under the receiver operating characteristic (ROC) curve (AUC), which is determined by 3-fold cross-validation using the <code>scikit-learn</code> cross-validator within the 80% training set for each Optuna trial (i.e., Bayesian meta-optimization).<span class="citation" data-cites="pedregosa_scikit_2011"><sup><a href="#ref-pedregosa_scikit_2011" role="doc-biblioref">2</a></sup></span></p>
 <div class="layout-chunk" data-layout="l-body">
 <div class="sourceCode" id="cb9"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> sklearn.metrics <span class="im">as</span> metrics</span>
 <span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> statistics <span class="im">import</span> mean</span>
@@ -2821,7 +2835,7 @@ Supervised ML
 <span id="cb9-166"><a href="#cb9-166" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span>(final_net, average_max_val_auc)</span></code></pre></div>
 </div>
 <h1 id="train-model">Train Model</h1>
-<p>Here, we use <code>Optuna</code> to optimize the hyperparameters for training <span class="citation" data-cites="akiba_optuna_2019">(<a href="#ref-akiba_optuna_2019" role="doc-biblioref">Akiba et al. 2019</a>)</span>. First, we define the <code>objective()</code> function, which returns the average validation AUC for any given trial with a combination of selected hyperparameters (as discussed above). This value is then used as feedback on the performance of the trial, and the <code>objective()</code> function is maximized using the multivariate tree-structured Parzen estimator algorithm <span class="citation" data-cites="bergstra_algorithms_2011">(<a href="#ref-bergstra_algorithms_2011" role="doc-biblioref">Bergstra et al. 2011</a>)</span>. The <code>trial</code> object is passed to various functions (define above) to tune hyperparameters.</p>
+<p>Here, we use <code>Optuna</code> to optimize the hyperparameters for training.<span class="citation" data-cites="akiba_optuna_2019"><sup><a href="#ref-akiba_optuna_2019" role="doc-biblioref">3</a></sup></span> First, we define the <code>objective()</code> function, which returns the average validation AUC for any given trial with a combination of selected hyperparameters (as discussed above). This value is then used as feedback on the performance of the trial, and the <code>objective()</code> function is maximized using the multivariate tree-structured Parzen estimator algorithm.<span class="citation" data-cites="bergstra_algorithms_2011"><sup><a href="#ref-bergstra_algorithms_2011" role="doc-biblioref">4</a></sup></span> The <code>trial</code> object is passed to various functions (define above) to tune hyperparameters.</p>
 <div class="layout-chunk" data-layout="l-body">
 <div class="sourceCode" id="cb10"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> optuna</span>
 <span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pickle</span>
@@ -3026,9 +3040,9 @@ Supervised ML
 <span id="cb18-15"><a href="#cb18-15" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">&quot;AUC: &quot;</span> <span class="op">+</span> <span class="bu">str</span>(roc_auc))</span></code></pre></div>
 </div>
 <h1 id="model-interpretability">Model Interpretability</h1>
-<p>Using the <code>captum</code> library for model interpretability in <code>PyTorch</code> (see CIFAR tutorial <a href="https://captum.ai/tutorials/CIFAR_TorchVision_Interpret">here</a>) <span class="citation" data-cites="kokhlikyan_pytorch_2019">(<a href="#ref-kokhlikyan_pytorch_2019" role="doc-biblioref">Kokhlikyan et al. 2019</a>)</span>.</p>
+<p>Using the <code>captum</code> library for model interpretability in <code>PyTorch</code> (see CIFAR tutorial <a href="https://captum.ai/tutorials/CIFAR_TorchVision_Interpret">here</a>).<span class="citation" data-cites="kokhlikyan_pytorch_2019"><sup><a href="#ref-kokhlikyan_pytorch_2019" role="doc-biblioref">5</a></sup></span></p>
 <p>First, define <code>attributeFeatures()</code>, which is a generic function that will be used for calling an attribute on the attribution algorithm defined in <code>input</code>. Then, choose a test set image at index <code>idx</code> and define <code>interpretAstrocyte()</code>, which will apply the selected attribution algorithms on that image. The model (i.e., <code>cpuCNN</code>) should be set to <code>eval</code> mode from the prior chunk.</p>
-<p>Within <code>interpretAstrocyte()</code>, compute gradients with respect to the class of the test set image, then, apply the integrated gradients attribution algorithm on the test set image. Integrated Gradients computes the integral of the gradients of the output prediction with respect to the input image pixels. More details about integrated gradients can be found in the <a href="https://arxiv.org/abs/1703.01365">original paper</a> <span class="citation" data-cites="sundararajan_axiomatic_2017">(<a href="#ref-sundararajan_axiomatic_2017" role="doc-biblioref">Sundararajan, Taly, and Yan 2017</a>)</span>.</p>
+<p>Within <code>interpretAstrocyte()</code>, compute gradients with respect to the class of the test set image, then, apply the integrated gradients attribution algorithm on the test set image. Integrated Gradients computes the integral of the gradients of the output prediction with respect to the input image pixels. More details about integrated gradients can be found in the <a href="https://arxiv.org/abs/1703.01365">original paper</a>.<span class="citation" data-cites="sundararajan_axiomatic_2017"><sup><a href="#ref-sundararajan_axiomatic_2017" role="doc-biblioref">6</a></sup></span></p>
 <p>Transpose the image and gradients for visualization purposes. Also, note that the classification label assumes that <code>test_data.class_to_idx</code> is <code>{'AD': 0, 'CTRL': 1}</code>.</p>
 <div class="layout-chunk" data-layout="l-body">
 <div class="sourceCode" id="cb19"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> captum.attr <span class="im">import</span> Saliency</span>
@@ -3204,24 +3218,24 @@ Supervised ML
 <span id="cb25-4"><a href="#cb25-4" aria-hidden="true" tabindex="-1"></a>cmd <span class="op">=</span> <span class="st">&#39;jupyter nbconvert --to html &#39;</span> <span class="op">+</span> <span class="st">&#39;&quot;&#39;</span> <span class="op">+</span> cname <span class="op">+</span> <span class="st">&#39;&quot;&#39;</span> <span class="op">+</span> <span class="st">&#39; --output &#39;</span> <span class="op">+</span> <span class="st">&#39;&quot;&#39;</span> <span class="op">+</span> fname <span class="op">+</span> <span class="st">&#39;&quot;&#39;</span></span></code></pre></div>
 </div>
 <div class="sourceCode" id="cb26"><pre class="sourceCode r distill-force-highlighting-css"><code class="sourceCode r"></code></pre></div>
-<div id="refs" class="references csl-bib-body hanging-indent" role="doc-bibliography">
-<div id="ref-akiba_optuna_2019" class="csl-entry" role="doc-biblioentry">
-Akiba, Takuya, Shotaro Sano, Toshihiko Yanase, Takeru Ohta, and Masanori Koyama. 2019. <span>“Optuna: <span>A</span> <span>Next</span>-Generation <span>Hyperparameter</span> <span>Optimization</span> <span>Framework</span>.”</span> <em>arXiv:1907.10902 [Cs, Stat]</em>, July. <a href="http://arxiv.org/abs/1907.10902">http://arxiv.org/abs/1907.10902</a>.
-</div>
-<div id="ref-bergstra_algorithms_2011" class="csl-entry" role="doc-biblioentry">
-Bergstra, James, Rémi Bardenet, Yoshua Bengio, and Balázs Kégl. 2011. <span>“Algorithms for <span>Hyper</span>-<span>Parameter</span> <span>Optimization</span>.”</span> <em>Advances in Neural Information Processing Systems</em> 24. <a href="https://proceedings.neurips.cc/paper/2011/hash/86e8f7ab32cfd12577bc2619bc635690-Abstract.html">https://proceedings.neurips.cc/paper/2011/hash/86e8f7ab32cfd12577bc2619bc635690-Abstract.html</a>.
-</div>
+<div id="refs" class="references csl-bib-body" data-line-spacing="2" role="doc-bibliography">
 <div id="ref-kingma_adam_2017" class="csl-entry" role="doc-biblioentry">
-Kingma, Diederik P., and Jimmy Ba. 2017. <span>“Adam: <span>A</span> <span>Method</span> for <span>Stochastic</span> <span>Optimization</span>.”</span> <em>arXiv:1412.6980 [Cs]</em>, January. <a href="http://arxiv.org/abs/1412.6980">http://arxiv.org/abs/1412.6980</a>.
-</div>
-<div id="ref-kokhlikyan_pytorch_2019" class="csl-entry" role="doc-biblioentry">
-Kokhlikyan, Narine, Vivek Miglani, Miguel Martin, Edward Wang, Jonathan Reynolds, Alexander Melnikov, Natalia Lunova, and Orion Reblitz-Richardson. 2019. <span>“<span>PyTorch</span> <span>Captum</span>.”</span> GitHub. <a href="https://github.com/pytorch/captum">https://github.com/pytorch/captum</a>.
+<div class="csl-left-margin">1. </div><div class="csl-right-inline">Kingma, D. P. &amp; Ba, J. Adam: <span>A</span> <span>Method</span> for <span>Stochastic</span> <span>Optimization</span>. <em>arXiv:1412.6980 [cs]</em> (2017).</div>
 </div>
 <div id="ref-pedregosa_scikit_2011" class="csl-entry" role="doc-biblioentry">
-Pedregosa, Fabian, Gaël Varoquaux, Alexandre Gramfort, Vincent Michel, Bertrand Thirion, Olivier Grisel, Mathieu Blondel, et al. 2011. <span>“Scikit-Learn: <span>Machine</span> <span>Learning</span> in <span>Python</span>.”</span> <em>Journal of Machine Learning Research</em> 12 (85): 2825–30. <a href="http://jmlr.org/papers/v12/pedregosa11a.html">http://jmlr.org/papers/v12/pedregosa11a.html</a>.
+<div class="csl-left-margin">2. </div><div class="csl-right-inline">Pedregosa, F. <em>et al.</em> Scikit-learn: <span>Machine</span> <span>Learning</span> in <span>Python</span>. <em>Journal of Machine Learning Research</em> <strong>12</strong>, 2825–2830 (2011).</div>
+</div>
+<div id="ref-akiba_optuna_2019" class="csl-entry" role="doc-biblioentry">
+<div class="csl-left-margin">3. </div><div class="csl-right-inline">Akiba, T., Sano, S., Yanase, T., Ohta, T. &amp; Koyama, M. Optuna: <span>A</span> <span>Next</span>-generation <span>Hyperparameter</span> <span>Optimization</span> <span>Framework</span>. <em>arXiv:1907.10902 [cs, stat]</em> (2019).</div>
+</div>
+<div id="ref-bergstra_algorithms_2011" class="csl-entry" role="doc-biblioentry">
+<div class="csl-left-margin">4. </div><div class="csl-right-inline">Bergstra, J., Bardenet, R., Bengio, Y. &amp; Kégl, B. Algorithms for <span>Hyper</span>-<span>Parameter</span> <span>Optimization</span>. <em>Advances in Neural Information Processing Systems</em> <strong>24</strong>, (2011).</div>
+</div>
+<div id="ref-kokhlikyan_pytorch_2019" class="csl-entry" role="doc-biblioentry">
+<div class="csl-left-margin">5. </div><div class="csl-right-inline">Kokhlikyan, N. <em>et al.</em> <span>PyTorch</span> <span>Captum</span>. (2019).</div>
 </div>
 <div id="ref-sundararajan_axiomatic_2017" class="csl-entry" role="doc-biblioentry">
-Sundararajan, Mukund, Ankur Taly, and Qiqi Yan. 2017. <span>“Axiomatic <span>Attribution</span> for <span>Deep</span> <span>Networks</span>.”</span> <em>arXiv:1703.01365 [Cs]</em>, June. <a href="http://arxiv.org/abs/1703.01365">http://arxiv.org/abs/1703.01365</a>.
+<div class="csl-left-margin">6. </div><div class="csl-right-inline">Sundararajan, M., Taly, A. &amp; Yan, Q. Axiomatic <span>Attribution</span> for <span>Deep</span> <span>Networks</span>. <em>arXiv:1703.01365 [cs]</em> (2017).</div>
 </div>
 </div>
 <!--radix_placeholder_article_footer-->

@@ -56,7 +56,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 }
 code span.al { color: #ad0000; } /* Alert */
 code span.an { color: #5e5e5e; } /* Annotation */
-code span.at { color: #20794d; } /* Attribute */
+code span.at { } /* Attribute */
 code span.bn { color: #ad0000; } /* BaseN */
 code span.bu { } /* BuiltIn */
 code span.cf { color: #007ba5; } /* ControlFlow */
@@ -77,12 +77,34 @@ code span.kw { color: #007ba5; } /* Keyword */
 code span.op { color: #5e5e5e; } /* Operator */
 code span.ot { color: #007ba5; } /* Other */
 code span.pp { color: #ad0000; } /* Preprocessor */
-code span.sc { color: #20794d; } /* SpecialChar */
+code span.sc { color: #5e5e5e; } /* SpecialChar */
 code span.ss { color: #20794d; } /* SpecialString */
 code span.st { color: #20794d; } /* String */
 code span.va { color: #111111; } /* Variable */
 code span.vs { color: #20794d; } /* VerbatimString */
 code span.wa { color: #5e5e5e; font-style: italic; } /* Warning */
+</style>
+
+<style>
+  div.csl-bib-body { }
+  div.csl-entry {
+    clear: both;
+    }
+  .hanging div.csl-entry {
+    margin-left:2em;
+    text-indent:-2em;
+  }
+  div.csl-left-margin {
+    min-width:2em;
+    float:left;
+  }
+  div.csl-right-inline {
+    margin-left:2em;
+    padding-left:1em;
+  }
+  div.csl-indent {
+    margin-left: 2em;
+  }
 </style>
 
   <!--radix_placeholder_meta_tags-->
@@ -110,7 +132,7 @@ code span.wa { color: #5e5e5e; font-style: italic; } /* Warning */
   <!--radix_placeholder_rmarkdown_metadata-->
 
   <script type="text/json" id="radix-rmarkdown-metadata">
-  {"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["title","description","site","bibliography","output"]}},"value":[{"type":"character","attributes":{},"value":["Cyclic Multiplex Fluorescent Immunohistochemistry and Machine Learning Reveal Distinct States of Astrocytes and Microglia in Normal Aging and Alzheimer’s Disease"]},{"type":"character","attributes":{},"value":["We have developed a methodology of cyclic multiplex fluorescent immunohistochemistry on human postmortem brain sections followed by an image analysis and machine learning pipeline that enables a deep morphological characterization of astrocytes and microglia in the Alzheimer's brain.\n"]},{"type":"character","attributes":{},"value":["distill::distill_website"]},{"type":"character","attributes":{},"value":["glia-ihc-bibliography.bib"]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["distill::distill_article"]}},"value":[{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["toc"]}},"value":[{"type":"logical","attributes":{},"value":[true]}]}]}]}
+  {"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["title","description","site","bibliography","csl","output"]}},"value":[{"type":"character","attributes":{},"value":["Cyclic Multiplex Fluorescent Immunohistochemistry and Machine Learning Reveal Distinct States of Astrocytes and Microglia in Normal Aging and Alzheimer’s Disease"]},{"type":"character","attributes":{},"value":["We have developed a methodology of cyclic multiplex fluorescent immunohistochemistry on human postmortem brain sections followed by an image analysis and machine learning pipeline that enables a deep morphological characterization of astrocytes and microglia in the Alzheimer's brain.\n"]},{"type":"character","attributes":{},"value":["distill::distill_website"]},{"type":"character","attributes":{},"value":["glia-ihc-bibliography.bib"]},{"type":"character","attributes":{},"value":["https://www.zotero.org/styles/nature-communications"]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["distill::distill_article"]}},"value":[{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["toc"]}},"value":[{"type":"logical","attributes":{},"value":[true]}]}]}]}
   </script>
   <!--/radix_placeholder_rmarkdown_metadata-->
   <!--radix_placeholder_navigation_in_header-->
@@ -1605,7 +1627,10 @@ code span.wa { color: #5e5e5e; font-style: italic; } /* Warning */
 
       // hoverable references
       $('span.citation[data-cites]').each(function() {
-        var refHtml = $('#ref-' + $(this).attr('data-cites')).html();
+        var refs = $(this).attr('data-cites').split(" ");
+        var refHtml = refs.map(function(ref) {
+          return "<p>" + $('#ref-' + ref).html() + "</p>";
+        }).join("\n");
         window.tippy(this, {
           allowHTML: true,
           content: refHtml,
@@ -2163,7 +2188,7 @@ code span.wa { color: #5e5e5e; font-style: italic; } /* Warning */
     color: var(--hover-color, white);
   }</style>
   <!--/radix_placeholder_distill-->
-  <script src="site_libs/header-attrs-2.9/header-attrs.js"></script>
+  <script src="site_libs/header-attrs-2.9.2/header-attrs.js"></script>
   <script src="site_libs/popper-2.6.0/popper.min.js"></script>
   <link href="site_libs/tippy-6.2.7/tippy.css" rel="stylesheet" />
   <link href="site_libs/tippy-6.2.7/tippy-light-border.css" rel="stylesheet" />
@@ -2291,7 +2316,7 @@ Supervised ML
 <p><a href="https://imagej.net/" target="_blank" rel="noreferrer noopener"><img src="https://img.shields.io/static/v1?style=for-the-badge&amp;logo=imagej&amp;color=00D8E0&amp;logoColor=white&amp;label=Language&amp;message=ImageJ" alt="ayushnoori" align="center"/></a></p>
 <p><a href="https://www.python.org/" target="_blank" rel="noreferrer noopener"><img src="https://img.shields.io/badge/Language-Python-3776AB?style=for-the-badge&amp;logo=python" align="center"/></a></p>
 <p><a href="https://pytorch.org/" target="_blank" rel="noreferrer noopener"><img src="https://img.shields.io/badge/Library-PyTorch-EE4C2C?style=for-the-badge&amp;logo=pytorch" alt="ayushnoori" align="center"/></a></p>
-<p>Additional required libraries are specified in each script. Image segmentation was performed with the FIJI distribution <span class="citation" data-cites="schindelin_fiji_2012">(<a href="#ref-schindelin_fiji_2012" role="doc-biblioref">Schindelin et al. 2012</a>)</span> of the open-source Java-based image analysis program ImageJ <span class="citation" data-cites="rueden_imagej2_2017">(<a href="#ref-rueden_imagej2_2017" role="doc-biblioref">Rueden et al. 2017</a>)</span>. Convolutional neural networks (CNN) were constructed using the PyTorch open-source deep learning library in the Python programming language (version 3.8.5) <span class="citation" data-cites="paszke_pytorch_2019">(<a href="#ref-paszke_pytorch_2019" role="doc-biblioref">Paszke et al. 2019</a>)</span>. Unless otherwise indicated, all other analyses were performed in the R programming language and statistical computing environment (version 4.1.0).</p>
+<p>Additional required libraries are specified in each script. Image segmentation was performed with the FIJI distribution of the open-source Java-based image analysis program ImageJ.<span class="citation" data-cites="schindelin_fiji_2012 rueden_imagej2_2017"><sup><a href="#ref-schindelin_fiji_2012" role="doc-biblioref">1</a>,<a href="#ref-rueden_imagej2_2017" role="doc-biblioref">2</a></sup></span> Convolutional neural networks (CNN) were constructed using the PyTorch open-source deep learning library in the Python programming language (version 3.8.5).<span class="citation" data-cites="paszke_pytorch_2019"><sup><a href="#ref-paszke_pytorch_2019" role="doc-biblioref">3</a></sup></span> Unless otherwise indicated, all other analyses were performed in the R programming language and statistical computing environment (version 4.1.0).</p>
 <h1 id="workflow">Workflow</h1>
 <p>Please see the analysis workflow below. Click on any icon to be navigated to the appropriate page.</p>
 <div class="layout-chunk" data-layout="l-body">
@@ -8576,15 +8601,15 @@ Supervised ML
 <h1 id="code-availability">Code Availability</h1>
 <p>Our full codebase is available for download on <a href="https://github.com/serrano-pozo-lab/glia-ihc">GitHub</a>.</p>
 <div class="sourceCode" id="cb1"><pre class="sourceCode r distill-force-highlighting-css"><code class="sourceCode r"></code></pre></div>
-<div id="refs" class="references csl-bib-body hanging-indent" role="doc-bibliography">
-<div id="ref-paszke_pytorch_2019" class="csl-entry" role="doc-biblioentry">
-Paszke, Adam, Sam Gross, Francisco Massa, Adam Lerer, James Bradbury, Gregory Chanan, Trevor Killeen, et al. 2019. <span>“<span>PyTorch</span>: <span>An</span> <span>Imperative</span> <span>Style</span>, <span>High</span>-<span>Performance</span> <span>Deep</span> <span>Learning</span> <span>Library</span>.”</span> In <em>Advances in <span>Neural</span> <span>Information</span> <span>Processing</span> <span>Systems</span> 32</em>, edited by H. Wallach, H. Larochelle, A. Beygelzimer, F. Alché-Buc, E. Fox, and R. Garnett, 8024–35. Curran Associates, Inc. <a href="http://papers.neurips.cc/paper/9015-pytorch-an-imperative-style-high-performance-deep-learning-library.pdf">http://papers.neurips.cc/paper/9015-pytorch-an-imperative-style-high-performance-deep-learning-library.pdf</a>.
+<div id="refs" class="references csl-bib-body" data-line-spacing="2" role="doc-bibliography">
+<div id="ref-schindelin_fiji_2012" class="csl-entry" role="doc-biblioentry">
+<div class="csl-left-margin">1. </div><div class="csl-right-inline">Schindelin, J. <em>et al.</em> Fiji: <span>An</span> <span>Open</span>-<span>Source</span> <span>Platform</span> for <span>Biological</span>-<span>Image</span> <span>Analysis</span>. <em>Nature Methods</em> <strong>9</strong>, 676–682 (2012).</div>
 </div>
 <div id="ref-rueden_imagej2_2017" class="csl-entry" role="doc-biblioentry">
-Rueden, Curtis T., Johannes Schindelin, Mark C. Hiner, Barry E. DeZonia, Alison E. Walter, Ellen T. Arena, and Kevin W. Eliceiri. 2017. <span>“<span>ImageJ2</span>: <span>ImageJ</span> for the Next Generation of Scientific Image Data.”</span> <em>BMC Bioinformatics</em> 18 (1): 529. <a href="https://doi.org/10.1186/s12859-017-1934-z">https://doi.org/10.1186/s12859-017-1934-z</a>.
+<div class="csl-left-margin">2. </div><div class="csl-right-inline">Rueden, C. T. <em>et al.</em> <span>ImageJ2</span>: <span>ImageJ</span> for the next generation of scientific image data. <em>BMC Bioinformatics</em> <strong>18</strong>, 529 (2017).</div>
 </div>
-<div id="ref-schindelin_fiji_2012" class="csl-entry" role="doc-biblioentry">
-Schindelin, Johannes, Ignacio Arganda-Carreras, Erwin Frise, Verena Kaynig, Mark Longair, Tobias Pietzsch, Stephan Preibisch, et al. 2012. <span>“Fiji: <span>An</span> <span>Open</span>-<span>Source</span> <span>Platform</span> for <span>Biological</span>-<span>Image</span> <span>Analysis</span>.”</span> <em>Nature Methods</em> 9 (7): 676–82. <a href="https://doi.org/10.1038/nmeth.2019">https://doi.org/10.1038/nmeth.2019</a>.
+<div id="ref-paszke_pytorch_2019" class="csl-entry" role="doc-biblioentry">
+<div class="csl-left-margin">3. </div><div class="csl-right-inline">Paszke, A. <em>et al.</em> <span>PyTorch</span>: <span>An</span> <span>Imperative</span> <span>Style</span>, <span>High</span>-<span>Performance</span> <span>Deep</span> <span>Learning</span> <span>Library</span>. in <em>Advances in <span>Neural</span> <span>Information</span> <span>Processing</span> <span>Systems</span> 32</em> (eds. Wallach, H. et al.) 8024–8035 (Curran Associates, Inc., 2019).</div>
 </div>
 </div>
 <!--radix_placeholder_article_footer-->
